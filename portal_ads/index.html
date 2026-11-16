@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>APO Advertisers Portal</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--mute:#64748b;--line:#e2e8f0;--pink:#e11d48;--cyan:#0ea5e9;--ok:#16a34a;--warn:#f59e0b;--bad:#dc2626;--shadow:0 6px 24px rgba(15,23,42,.08);--glow:rgba(225,29,72,.28)}
+:root[data-theme="dark"]{--bg:#090d16;--card:#131b2e;--ink:#e8eef9;--mute:#94a3b8;--line:#243049;--shadow:0 6px 24px rgba(0,0,0,.45);--glow:rgba(225,29,72,.45);--cyan:#38bdf8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#090d16;--card:#131b2e;--ink:#e8eef9;--mute:#94a3b8;--line:#243049;--shadow:0 6px 24px rgba(0,0,0,.45);--glow:rgba(225,29,72,.45);--cyan:#38bdf8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Arabic",Tahoma,sans-serif;line-height:1.55;padding:0 16px 48px}
+.wrap{max-width:820px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px 0 6px}
+header h1{font-size:19px;margin:0;color:var(--pink);text-shadow:0 0 14px var(--glow)}
+.tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;transition:box-shadow .2s,border-color .2s}
+.chip:hover{border-color:var(--cyan);box-shadow:0 0 12px var(--glow)}
+.chip.on{background:var(--pink);color:#fff;border-color:var(--pink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:var(--shadow);transition:box-shadow .25s,border-color .25s}
+.card:hover{border-color:var(--pink);box-shadow:0 0 18px var(--glow)}
+h2{font-size:15px;margin:22px 4px 6px;color:var(--mute);font-weight:700}
+.hello{font-size:21px;font-weight:800;margin:2px 0}
+.sub{color:var(--mute);font-size:13px}
+input{width:100%;font-size:22px;letter-spacing:3px;text-align:center;padding:14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);direction:ltr;text-transform:uppercase}
+input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--glow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:700;background:var(--pink);color:#fff;cursor:pointer;transition:box-shadow .2s,transform .1s}
+.btn:hover{box-shadow:0 0 16px var(--glow)}
+.btn:active{transform:scale(.98)}
+.btn.block{width:100%;margin-top:12px}
+.btn.alt{background:var(--card);color:var(--pink);border:1.5px solid var(--pink)}
+.btn[disabled]{opacity:.65;cursor:wait}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+.err{color:var(--bad);text-align:center;margin-top:10px;font-size:14px}
+.pill{display:inline-block;border-radius:999px;padding:3px 11px;font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:10px}
+.kv div{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--mute)}
+.kv b{display:block;color:var(--ink);font-size:14.5px;margin-top:2px}
+.agree{white-space:pre-wrap;background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.note{background:rgba(14,165,233,.1);border:1px dashed var(--cyan);border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0}
+/* الحقل العلوي المتنقل */
+.slider{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 10px}
+.slide{flex:0 0 86%;scroll-snap-align:center;border-radius:16px;overflow:hidden;border:1px solid var(--pink);box-shadow:0 0 20px var(--glow);background:var(--card)}
+.slide .ph{height:150px;background:linear-gradient(135deg,var(--pink),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px}
+.slide img,.ad img{width:100%;height:150px;object-fit:cover;display:block}
+.slide .tx{padding:10px 12px}
+.ad img{height:190px;border-radius:12px;margin-bottom:10px}
+.ad .co{font-weight:800;font-size:16px}
+.ad .ti{font-weight:700;margin-top:6px}
+.ad .ds{color:var(--mute);font-size:14px;margin-top:4px;white-space:pre-wrap}
+.cat{display:inline-block;background:rgba(14,165,233,.14);color:var(--cyan);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.links a{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--ink);text-decoration:none;transition:box-shadow .2s,border-color .2s}
+.links a:hover{border-color:var(--pink);box-shadow:0 0 12px var(--glow)}
+.place{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;font-size:13px;color:var(--mute)}
+.place b{color:var(--ink)}
+.empty{color:var(--mute);text-align:center;padding:16px;font-size:14px}
+footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
+.ltr{direction:ltr;unicode-bidi:isolate}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="ttl"></h1>
+    <div class="tools" id="tools"></div>
+  </header>
+  <div id="app"></div>
+  <footer id="foot"></footer>
+</div>
+<script>
+(function () {
+  'use strict';
+  var SUPABASE_URL = 'https://ijhkzkufnewlkuxoqcim.supabase.co';
+  var ANON_KEY = 'sb_publishable_0X9fbtIUmWVwb4GunSbt6A_v72zvU1M';
+  var ALPHA = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+  var T = {
+    ar: { name: 'العربية', portal: 'بوابة المعلنين', enter: 'أدخل كود المعلن', code: 'الكود', open: 'دخول', bad: 'الكود غير صحيح', typo: 'الكود فيه خطأ في الكتابة، تحقق منه', net: 'تعذّر الاتصال، حاول لاحقاً',
+      hello: 'أهلاً', agreement: 'اتفاقك', price: 'السعر المتفق عليه', period: 'مدة الاتفاق', from: 'من', to: 'إلى', contact: 'جهة الاتصال', phone: 'الهاتف', status: 'حالة الاتفاق',
+      running: 'جارٍ', notstarted: 'لم يبدأ بعد', expired: 'منتهٍ', paused: 'موقوف', left: 'متبقٍ', days: 'يوماً', slider: 'الحقل العلوي المتنقل (كما يظهر في البرنامج)', ads: 'إعلاناتك كما تظهر في البرنامج',
+      none_slider: 'لا إعلان لك في الحقل العلوي المتنقل حالياً.', none_ads: 'لا إعلانات مسجّلة لك بعد.', readonly: 'هذه معاينة للقراءة فقط. إن وجدت خطأ في بيانات إعلانك أو مدته أو مكان ظهوره فتواصل معنا لتعديله.',
+      live: 'ظاهر الآن', sched: 'لم يبدأ بعد', exp: 'انتهت مدته', off: 'موقوف', top: 'ضمن الحقل العلوي المتنقل', notop: 'غير موجود في الحقل العلوي', featuredUntil: 'مميَّز حتى', display: 'مدة الظهور', open_end: 'مفتوحة',
+      refresh: 'تحديث', updated: 'آخر تحديث', logout: 'خروج', call: 'اتصال', wa: 'واتساب', map: 'الخريطة', web: 'الموقع', video: 'فيديو', theme: 'المظهر', cat_Dental_Equipment: 'مواد وأجهزة', cat_Dental_Labs: 'معامل أسنان', cat_Clinics_Centers: 'مراكز وعيادات', place: 'مكان وحالة الظهور', noimg: 'بلا صورة', foot: 'APO Digital Lab — بوابة المعلنين' },
+    en: { name: 'English', portal: 'Advertisers Portal', enter: 'Enter your advertiser code', code: 'Code', open: 'Sign in', bad: 'Invalid code', typo: 'The code has a typo, please check it', net: 'Connection failed, try again later',
+      hello: 'Welcome', agreement: 'Your agreement', price: 'Agreed price', period: 'Agreement period', from: 'From', to: 'To', contact: 'Contact', phone: 'Phone', status: 'Agreement status',
+      running: 'Running', notstarted: 'Not started yet', expired: 'Expired', paused: 'Paused', left: 'left', days: 'day(s)', slider: 'Top moving banner (as shown in the app)', ads: 'Your ads as they appear in the app',
+      none_slider: 'You have no ad in the top moving banner right now.', none_ads: 'No ads registered for you yet.', readonly: 'This is a read-only preview. If you find a mistake in your ad data, period or placement, contact us to fix it.',
+      live: 'Live now', sched: 'Not started', exp: 'Expired', off: 'Paused', top: 'In the top moving banner', notop: 'Not in the top banner', featuredUntil: 'Featured until', display: 'Display period', open_end: 'open',
+      refresh: 'Refresh', updated: 'Last update', logout: 'Sign out', call: 'Call', wa: 'WhatsApp', map: 'Map', web: 'Website', video: 'Video', theme: 'Theme', cat_Dental_Equipment: 'Dental Equipment', cat_Dental_Labs: 'Dental Labs', cat_Clinics_Centers: 'Clinics & Centers', place: 'Placement & visibility', noimg: 'No image', foot: 'APO Digital Lab — Advertisers Portal' },
+    fr: { name: 'Français', portal: 'Portail annonceurs', enter: 'Saisissez votre code annonceur', code: 'Code', open: 'Entrer', bad: 'Code invalide', typo: 'Le code contient une faute, vérifiez-le', net: 'Connexion impossible, réessayez plus tard',
+      hello: 'Bienvenue', agreement: 'Votre accord', price: 'Prix convenu', period: 'Période de l’accord', from: 'Du', to: 'Au', contact: 'Contact', phone: 'Téléphone', status: 'État de l’accord',
+      running: 'En cours', notstarted: 'Pas encore commencé', expired: 'Terminé', paused: 'En pause', left: 'restant(s)', days: 'jour(s)', slider: 'Bannière mobile du haut (comme dans l’application)', ads: 'Vos annonces telles qu’elles apparaissent dans l’application',
+      none_slider: 'Aucune annonce de votre part dans la bannière du haut pour le moment.', none_ads: 'Aucune annonce enregistrée pour vous.', readonly: 'Ceci est un aperçu en lecture seule. Si vous trouvez une erreur dans vos données, la période ou l’emplacement, contactez-nous pour la corriger.',
+      live: 'En ligne', sched: 'Planifiée', exp: 'Terminée', off: 'En pause', top: 'Dans la bannière mobile du haut', notop: 'Pas dans la bannière du haut', featuredUntil: 'Mise en avant jusqu’au', display: 'Période d’affichage', open_end: 'ouverte',
+      refresh: 'Actualiser', updated: 'Dernière mise à jour', logout: 'Quitter', call: 'Appeler', wa: 'WhatsApp', map: 'Carte', web: 'Site web', video: 'Vidéo', theme: 'Thème', cat_Dental_Equipment: 'Matériel et équipements', cat_Dental_Labs: 'Laboratoires dentaires', cat_Clinics_Centers: 'Cabinets et centres', place: 'Emplacement et visibilité', noimg: 'Sans image', foot: 'APO Digital Lab — Portail annonceurs' }
+  };
+
+  var lang = 'ar', theme = 'auto', data = null, code = '', busy = false, err = '', updatedAt = null, slideTimer = null;
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+  function t(k) { return (T[lang] && T[lang][k]) || T.en[k] || k; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function safeUrl(u) { u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+  function digits(p) { return String(p || '').replace(/[^0-9+]/g, ''); }
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(v) { if (!v) return ''; var d = new Date(v); if (isNaN(d)) return String(v).slice(0, 10); return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()); }
+  function hm(d) { return two(d.getHours()) + ':' + two(d.getMinutes()); }
+
+  // ---- الكود: التطبيع وحرف التحقق (مطابق لـSQL 45 وللتطبيق)
+  function norm(raw) {
+    var s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (s.length === 20 && s.indexOf('APOADV') === 0) s = s.slice(6);
+    return s;
+  }
+  function chkOk(c) {
+    if (c.length !== 14 || c.indexOf('ADV') !== 0) return false;
+    var tot = 0;
+    for (var i = 0; i < 13; i++) { var v = ALPHA.indexOf(c.charAt(i)); if (v < 0) return false; tot = (tot + v * (i + 1)) % 31; }
+    return ALPHA.charAt(tot) === c.charAt(13);
+  }
+
+  // ---- نافذة الظهور (مطابقة لـadvertisers_core.dart)
+  function winState(s, e, now) {
+    if (s && new Date(s) > now) return 'sched';
+    if (e && !(new Date(e) > now)) return 'exp';
+    return 'live';
+  }
+  function endOfDay(d) { if (!d) return null; var x = new Date(d + 'T23:59:59'); return isNaN(x) ? null : x; }
+
+  function rpc(name, body) {
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY },
+      body: JSON.stringify(body)
+    }).then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); });
+  }
+
+  function applyTheme() {
+    var r = document.documentElement;
+    if (theme === 'light' || theme === 'dark') r.setAttribute('data-theme', theme); else r.removeAttribute('data-theme');
+  }
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.getElementById('ttl').textContent = '📣 ' + t('portal');
+    document.getElementById('foot').textContent = t('foot');
+    document.title = t('portal');
+  }
+
+  function renderTools() {
+    var h = '';
+    ['ar', 'en', 'fr'].forEach(function (l) { h += '<button class="chip' + (l === lang ? ' on' : '') + '" data-l="' + l + '">' + esc(T[l].name) + '</button>'; });
+    h += '<button class="chip" id="th" title="' + esc(t('theme')) + '">' + (theme === 'dark' ? '🌙' : (theme === 'light' ? '☀️' : '🌓')) + '</button>';
+    if (data) {
+      h += '<button class="chip" id="rf" title="' + esc(t('refresh')) + '">↻ ' + esc(t('refresh')) + '</button>';
+      h += '<button class="chip" id="lo">' + esc(t('logout')) + '</button>';
+    }
+    document.getElementById('tools').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-l]'), function (b) {
+      b.onclick = function () { lang = b.getAttribute('data-l'); store('apo_adv_lang', lang); render(); };
+    });
+    document.getElementById('th').onclick = function () { theme = theme === 'auto' ? 'dark' : (theme === 'dark' ? 'light' : 'auto'); store('apo_adv_theme', theme); applyTheme(); renderTools(); };
+    var rf = document.getElementById('rf'); if (rf) rf.onclick = function () { load(true); };
+    var lo = document.getElementById('lo'); if (lo) lo.onclick = function () { data = null; code = ''; store('apo_adv_code', null); err = ''; render(); };
+  }
+
+  function loginView() {
+    return '<div class="card"><div class="hello">' + esc(t('enter')) + '</div>' +
+      '<div style="margin-top:12px"><input id="cd" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ADV-XXXXX-XXXXX-X" value="' + esc(code) + '"></div>' +
+      '<button class="btn block" id="go"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="spin">⟳</span>' : esc(t('open'))) + '</button>' +
+      (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>';
+  }
+
+  function adState(a, now) {
+    if (a.is_active !== true) return { k: 'off', c: '#94a3b8' };
+    var w = winState(a.starts_at, a.ends_at, now);
+    return w === 'live' ? { k: 'live', c: '#16a34a' } : (w === 'sched' ? { k: 'sched', c: '#0ea5e9' } : { k: 'exp', c: '#dc2626' });
+  }
+  function inTop(a, now) {
+    return adState(a, now).k === 'live' && a.is_featured === true && (!a.featured_until || new Date(a.featured_until) > now);
+  }
+  function catLabel(c) { var k = 'cat_' + String(c || '').replace(/[^A-Za-z]+/g, '_'); return T[lang][k] || c || ''; }
+
+  function linksOf(a) {
+    var h = '';
+    if (a.phone) h += '<a class="ltr" href="tel:' + esc(digits(a.phone)) + '">📞 ' + esc(t('call')) + '</a>';
+    if (a.whatsapp) h += '<a href="https://wa.me/' + esc(digits(a.whatsapp).replace(/^\+/, '')) + '" target="_blank" rel="noopener">💬 ' + esc(t('wa')) + '</a>';
+    [['map_url', '📍', 'map'], ['website_url', '🌐', 'web'], ['video_url', '🎬', 'video']].forEach(function (x) { var u = safeUrl(a[x[0]]); if (u) h += '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + x[1] + ' ' + esc(t(x[2])) + '</a>'; });
+    [['facebook_url', 'Facebook'], ['instagram_url', 'Instagram'], ['youtube_url', 'YouTube'], ['twitter_url', 'X']].forEach(function (x) { var u = safeUrl(a[x[0]]); if (u) h += '<a href="' + esc(u) + '" target="_blank" rel="noopener">🔗 ' + x[1] + '</a>'; });
+    return h ? '<div class="links">' + h + '</div>' : '';
+  }
+
+  function imgOf(a) { var u = safeUrl(a.image_url); return u ? '<img src="' + esc(u) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : ''; }
+
+  function slideView(a) {
+    var u = safeUrl(a.image_url);
+    return '<div class="slide">' + (u ? '<img src="' + esc(u) + '" alt="" onerror="this.outerHTML=\'<div class=ph>📣</div>\'">' : '<div class="ph">📣</div>') +
+      '<div class="tx"><div class="co">' + esc(a.company_name) + '</div><div class="ti">' + esc(a.title) + '</div></div></div>';
+  }
+
+  function adView(a, now) {
+    var st = adState(a, now), top = inTop(a, now);
+    var h = '<div class="card ad">' + imgOf(a) +
+      '<div class="row"><span class="co">' + esc(a.company_name) + '</span>' + (a.category ? '<span class="cat">' + esc(catLabel(a.category)) + '</span>' : '') +
+      '<span class="pill" style="background:' + st.c + '">' + esc(t(st.k)) + '</span></div>' +
+      '<div class="ti">' + esc(a.title) + '</div>' +
+      (a.description ? '<div class="ds">' + esc(a.description) + '</div>' : '') + linksOf(a) +
+      '<div class="place"><b>' + esc(t('place')) + ':</b> ' +
+      (top ? '✅ ' + esc(t('top')) : '— ' + esc(t('notop'))) +
+      (a.is_featured && a.featured_until ? ' · ' + esc(t('featuredUntil')) + ' <b class="ltr">' + esc(ymd(a.featured_until)) + '</b>' : '') +
+      '<br>' + esc(t('display')) + ': <b class="ltr">' + esc(ymd(a.starts_at) || '—') + ' → ' + esc(ymd(a.ends_at) || t('open_end')) + '</b></div></div>';
+    return h;
+  }
+
+  function mainView() {
+    var adv = data.advertiser || {}, ads = data.ads || [], now = new Date(data.now || Date.now());
+    var s = adv.starts_at ? new Date(adv.starts_at + 'T00:00:00') : null, e = endOfDay(adv.ends_at);
+    var stKey = adv.is_active !== true ? 'paused' : (s && s > now ? 'notstarted' : (e && e < now ? 'expired' : 'running'));
+    var stCol = { paused: '#94a3b8', notstarted: '#0ea5e9', expired: '#dc2626', running: '#16a34a' }[stKey];
+    var left = (stKey === 'running' && e) ? Math.ceil((e - now) / 86400000) : null;
+    var tops = ads.filter(function (a) { return inTop(a, now); });
+
+    var h = '<div class="card"><div class="hello">' + esc(t('hello')) + ' ' + esc(adv.contact_name || adv.company_name) + '</div><div class="sub">' + esc(adv.company_name) + '</div>' +
+      '<div class="kv">' +
+      '<div>' + esc(t('status')) + '<b><span class="pill" style="background:' + stCol + '">' + esc(t(stKey)) + '</span>' + (left != null ? ' ' + esc(t('left')) + ' ' + left + ' ' + esc(t('days')) : '') + '</b></div>' +
+      '<div>' + esc(t('period')) + '<b class="ltr">' + esc(adv.starts_at || '—') + ' → ' + esc(adv.ends_at || t('open_end')) + '</b></div>' +
+      (adv.price != null ? '<div>' + esc(t('price')) + '<b class="ltr">' + esc(adv.price) + ' ' + esc(adv.currency || '') + '</b></div>' : '') +
+      (adv.phone ? '<div>' + esc(t('phone')) + '<b class="ltr">' + esc(adv.phone) + '</b></div>' : '') +
+      '</div>' + (adv.agreement_text ? '<div class="agree">' + esc(adv.agreement_text) + '</div>' : '') +
+      '<div class="note">' + esc(t('readonly')) + '</div>' +
+      '<div class="sub">' + esc(t('updated')) + ': <b class="ltr">' + (updatedAt ? esc(hm(updatedAt)) : '') + '</b></div></div>';
+
+    h += '<h2>' + esc(t('slider')) + '</h2>';
+    h += tops.length ? '<div class="slider" id="sl">' + tops.map(slideView).join('') + '</div>' : '<div class="card empty">' + esc(t('none_slider')) + '</div>';
+    h += '<h2>' + esc(t('ads')) + '</h2>';
+    h += ads.length ? ads.map(function (a) { return adView(a, now); }).join('') : '<div class="card empty">' + esc(t('none_ads')) + '</div>';
+    return h;
+  }
+
+  function startSlider() {
+    if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
+    var sl = document.getElementById('sl');
+    if (!sl || sl.children.length < 2) return;
+    var i = 0;
+    slideTimer = setInterval(function () {
+      i = (i + 1) % sl.children.length;
+      var c = sl.children[i];
+      sl.scrollTo({ left: c.offsetLeft - sl.offsetLeft - 8 * (document.documentElement.dir === 'rtl' ? -1 : 1), behavior: 'smooth' });
+    }, 3500);
+  }
+
+  function render() {
+    applyLang();
+    renderTools();
+    var app = document.getElementById('app');
+    app.innerHTML = data ? mainView() : loginView();
+    var go = document.getElementById('go');
+    if (go) {
+      var cd = document.getElementById('cd');
+      go.onclick = function () { code = cd.value; load(false); };
+      cd.onkeydown = function (e) { if (e.key === 'Enter') { code = cd.value; load(false); } };
+    }
+    startSlider();
+  }
+
+  function load(isRefresh) {
+    var c = norm(code);
+    if (!chkOk(c)) { err = t(c.length === 14 ? 'typo' : 'bad'); data = null; render(); return; }
+    busy = true; err = ''; if (!isRefresh) render();
+    var rf = document.getElementById('rf'); if (rf) { rf.disabled = true; rf.innerHTML = '<span class="spin">⟳</span> ' + esc(t('refresh')); }
+    rpc('advertiser_portal_get', { p_code: c }).then(function (r) {
+      busy = false;
+      if (!r) { data = null; err = t('bad'); store('apo_adv_code', null); render(); return; }
+      data = r; code = c; updatedAt = new Date(); store('apo_adv_code', c); render();
+    }).catch(function () {
+      busy = false; if (!data) err = t('net'); render();
+      if (data) { var b = document.getElementById('rf'); if (b) b.textContent = '⚠ ' + t('net'); }
+    });
+  }
+
+  // ---- البدء: اللغة/المظهر المحفوظان، ثم ?c= أو الكود المحفوظ
+  var q = {}; location.search.replace(/^\?/, '').split('&').forEach(function (p) { var kv = p.split('='); if (kv[0]) q[kv[0]] = decodeURIComponent(kv[1] || ''); });
+  var sl = store('apo_adv_lang'); var nl = (navigator.language || 'ar').slice(0, 2);
+  lang = T[q.l] ? q.l : (T[sl] ? sl : (T[nl] ? nl : 'ar'));
+  var sth = store('apo_adv_theme'); theme = (sth === 'light' || sth === 'dark') ? sth : 'auto';
+  applyTheme();
+  code = q.c || store('apo_adv_code') || '';
+  render();
+  if (code) load(false);
+  // تنظيف الكود من شريط العنوان بعد القراءة (لا يبقى في السجل)
+  if (q.c && window.history && history.replaceState) { try { history.replaceState(null, '', location.pathname + (q.l ? '?l=' + encodeURIComponent(q.l) : '')); } catch (e) {} }
+})();
+</script>
+</body>
+</html>
