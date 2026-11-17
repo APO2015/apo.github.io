@@ -7,15 +7,19 @@
 <title>APO Client Portal</title>
 <style>
 :root{--bg:#f3f6fb;--card:#fff;--ink:#0f172a;--mute:#64748b;--line:#e2e8f0;--brand:#15507f;--sky:#1aa7f5;--ok:#16a34a;--warn:#f59e0b;--bad:#dc2626;--shadow:0 6px 24px rgba(15,23,42,.08)}
-@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#131c2e;--ink:#e8eef9;--mute:#94a3b8;--line:#243049;--shadow:0 6px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#131c2e;--ink:#e8eef9;--mute:#94a3b8;--line:#243049;--shadow:0 6px 24px rgba(0,0,0,.4)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1220;--card:#131c2e;--ink:#e8eef9;--mute:#94a3b8;--line:#243049;--shadow:0 6px 24px rgba(0,0,0,.4)}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Arabic",Tahoma,sans-serif;line-height:1.5;padding:0 16px 40px}
 .wrap{max-width:760px;margin:0 auto}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 8px}
 header h1{font-size:18px;margin:0;color:var(--brand)}
-@media (prefers-color-scheme:dark){header h1{color:var(--sky)}}
-.lang{display:flex;gap:6px}
+:root[data-theme="dark"] header h1{color:var(--sky)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header h1{color:var(--sky)}}
+.lang{display:flex;gap:6px;flex-wrap:wrap}
 .lang button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+.lang button.th{padding:5px 10px}
+.lang button:hover{border-color:var(--sky);box-shadow:0 0 12px rgba(26,167,245,.35)}
 .lang button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
 h2{font-size:15px;margin:22px 4px 6px;color:var(--mute);font-weight:700;letter-spacing:.2px}
@@ -26,7 +30,8 @@ input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(26,16
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;background:var(--brand);color:#fff;cursor:pointer;text-decoration:none}
 .btn.wa{background:#16a34a}
 .btn.alt{background:var(--card);color:var(--brand);border:1.5px solid var(--brand)}
-@media (prefers-color-scheme:dark){.btn.alt{color:var(--sky);border-color:var(--sky)}}
+:root[data-theme="dark"] .btn.alt{color:var(--sky);border-color:var(--sky)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.alt{color:var(--sky);border-color:var(--sky)}}
 .btn[disabled]{opacity:.65;cursor:wait}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{display:inline-block;animation:spin .8s linear infinite}
@@ -138,6 +143,12 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
   function fmtTime(v) { var d = new Date(v); if (isNaN(d)) return ''; return d.toLocaleTimeString(lang === 'ar' ? 'ar' : lang, { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
   function fmtMoney(n, cur) { var v = Number(n || 0); var dec = /^(IQD|LBP|SYP|YER|SOS|DJF|KMF)$/.test(cur) ? 0 : (/^(BHD|KWD|OMR|JOD|TND|LYD)$/.test(cur) ? 3 : 2); return v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + ' ' + esc(cur); }
 
+  // المظهر: تلقائي (حسب الجهاز) ← داكن ← فاتح (يُحفظ على هذا المتصفح)
+  var theme = 'auto';
+  try { var sth = localStorage.getItem('apo_portal_theme'); if (sth === 'dark' || sth === 'light') theme = sth; } catch (e) {}
+  function applyTheme() { var r = document.documentElement; if (theme === 'dark' || theme === 'light') r.setAttribute('data-theme', theme); else r.removeAttribute('data-theme'); }
+  applyTheme();
+
   function applyLang() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -149,6 +160,10 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
       b.onclick = function () { lang = k; try { localStorage.setItem('apo_portal_lang', k); } catch (e) {} render(); };
       L.appendChild(b);
     });
+    var tb = document.createElement('button'); tb.className = 'th'; tb.textContent = theme === 'dark' ? '🌙' : (theme === 'light' ? '☀️' : '🌓');
+    tb.title = { ar: 'المظهر', en: 'Theme', fr: 'Thème' }[lang];
+    tb.onclick = function () { theme = theme === 'auto' ? 'dark' : (theme === 'dark' ? 'light' : 'auto'); try { localStorage.setItem('apo_portal_theme', theme); } catch (e) {} applyTheme(); applyLang(); };
+    L.appendChild(tb);
     document.getElementById('foot').textContent = t().readonly;
   }
 
