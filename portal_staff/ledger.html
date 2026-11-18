@@ -23,19 +23,33 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
 <script src="staff_core.js"></script>
 <script>
 /* بوابة المحاسب — بنفسجية. نفس حساب المحاسب وكوده وصلاحياته (RLS) كما في البرنامج.
-   قراءة: الفواتير والعملاء المدينون والدفعات والمصروفات والفواتير الصادرة. كتابة: تسجيل دفعة على فاتورة (فقط). */
+   قراءة: الملخص، الديون (مطابقة لدفتر الديون)، الفواتير، المصروفات، الرواتب، المخزون، الصادرة.
+   كتابة: دفعة على فاتورة، إضافة مصروف، دفعة راتب، تعديل كمية مادة (مع سجل المخزون). لا حذف من البوابة. */
 (function () {
   var S = {
-    ar: { hello: 'أهلاً', close: 'إغلاق', tSum: 'الملخص', tInv: 'الفواتير', tCli: 'ذمم العملاء', tExp: 'المصروفات', tOut: 'الصادرة', inv: 'فاتورة', total: 'الإجمالي', paid: 'المدفوع', remaining: 'المتبقي', invoiced: 'المفوتر', collected: 'المحصّل', monthPaid: 'محصّل هذا الشهر', monthExp: 'مصروفات هذا الشهر', openInv: 'فواتير غير مسددة', payables: 'مستحق للمعامل الخارجية', unpaid: 'غير مسددة', all: 'الكل', draft: 'مسودة', issued: 'غير مدفوعة', partial: 'مدفوعة جزئياً', paidSt: 'مدفوعة', client: 'العميل', lab: 'المعمل', date: 'التاريخ', items: 'البنود', payments: 'الدفعات', addPay: 'تسجيل دفعة', amount: 'المبلغ', method: 'الطريقة', cash: 'نقداً', transfer: 'حوالة', card: 'بطاقة', other: 'أخرى', savePay: 'حفظ الدفعة', payOk: 'سُجّلت الدفعة', badAmount: 'أدخل مبلغاً صحيحاً.', over: 'المبلغ أكبر من المتبقي. متابعة؟', yes: 'نعم', noInv: 'لا فواتير.', noExp: 'لا مصروفات.', noOut: 'لا فواتير صادرة.', noCli: 'لا ذمم مفتوحة.', noPay: 'لا دفعات.', category: 'النوع', vendor: 'الجهة', qty: 'الكمية', price: 'السعر', discount: 'الخصم', tax: 'الضريبة', draftNo: 'المسودة لا تقبل دفعات.', cur: 'العملة', invoicesN: 'فواتير', readonly: 'للقراءة فقط', materials: 'مواد', rent: 'إيجار', utilities: 'مرافق', salaries: 'رواتب', maintenance: 'صيانة', transport: 'نقل', marketing: 'تسويق' },
-    en: { hello: 'Hello', close: 'Close', tSum: 'Summary', tInv: 'Invoices', tCli: 'Receivables', tExp: 'Expenses', tOut: 'Outgoing', inv: 'Invoice', total: 'Total', paid: 'Paid', remaining: 'Remaining', invoiced: 'Invoiced', collected: 'Collected', monthPaid: 'Collected this month', monthExp: 'Expenses this month', openInv: 'Unpaid invoices', payables: 'Owed to external labs', unpaid: 'Unpaid', all: 'All', draft: 'Draft', issued: 'Unpaid', partial: 'Partially paid', paidSt: 'Paid', client: 'Client', lab: 'Lab', date: 'Date', items: 'Items', payments: 'Payments', addPay: 'Record payment', amount: 'Amount', method: 'Method', cash: 'Cash', transfer: 'Transfer', card: 'Card', other: 'Other', savePay: 'Save payment', payOk: 'Payment recorded', badAmount: 'Enter a valid amount.', over: 'Amount exceeds the remaining balance. Continue?', yes: 'Yes', noInv: 'No invoices.', noExp: 'No expenses.', noOut: 'No outgoing invoices.', noCli: 'No open balances.', noPay: 'No payments.', category: 'Category', vendor: 'Payee', qty: 'Qty', price: 'Price', discount: 'Discount', tax: 'Tax', draftNo: 'Drafts cannot take payments.', cur: 'Currency', invoicesN: 'invoices', readonly: 'Read-only', materials: 'Materials', rent: 'Rent', utilities: 'Utilities', salaries: 'Salaries', maintenance: 'Maintenance', transport: 'Transport', marketing: 'Marketing' },
-    fr: { hello: 'Bonjour', close: 'Fermer', tSum: 'Résumé', tInv: 'Factures', tCli: 'Créances', tExp: 'Dépenses', tOut: 'Sortantes', inv: 'Facture', total: 'Total', paid: 'Payé', remaining: 'Reste', invoiced: 'Facturé', collected: 'Encaissé', monthPaid: 'Encaissé ce mois', monthExp: 'Dépenses du mois', openInv: 'Factures impayées', payables: 'Dû aux labos externes', unpaid: 'Impayées', all: 'Toutes', draft: 'Brouillon', issued: 'Impayée', partial: 'Partiellement payée', paidSt: 'Payée', client: 'Client', lab: 'Labo', date: 'Date', items: 'Lignes', payments: 'Versements', addPay: 'Enregistrer un versement', amount: 'Montant', method: 'Mode', cash: 'Espèces', transfer: 'Virement', card: 'Carte', other: 'Autre', savePay: 'Enregistrer', payOk: 'Versement enregistré', badAmount: 'Saisissez un montant valide.', over: 'Le montant dépasse le reste dû. Continuer ?', yes: 'Oui', noInv: 'Aucune facture.', noExp: 'Aucune dépense.', noOut: 'Aucune facture sortante.', noCli: 'Aucun solde ouvert.', noPay: 'Aucun versement.', category: 'Catégorie', vendor: 'Bénéficiaire', qty: 'Qté', price: 'Prix', discount: 'Remise', tax: 'Taxe', draftNo: "Un brouillon n'accepte pas de versement.", cur: 'Devise', invoicesN: 'factures', readonly: 'Lecture seule', materials: 'Matériaux', rent: 'Loyer', utilities: 'Charges', salaries: 'Salaires', maintenance: 'Maintenance', transport: 'Transport', marketing: 'Marketing' }
+    ar: { hello: 'أهلاً', close: 'إغلاق', tSum: 'الملخص', tDebt: 'الديون', tInv: 'الفواتير', tExp: 'المصروفات', tSal: 'الرواتب', tStock: 'المخزون', tOut: 'الصادرة', total: 'الإجمالي', paid: 'المدفوع', remaining: 'المتبقي', invoiced: 'المفوتر', collected: 'المحصّل', monthPaid: 'محصّل هذا الشهر', monthExp: 'مصروفات هذا الشهر', payables: 'مستحق للمعامل الخارجية', receivable: 'مستحق لنا (المدينون)', payable: 'علينا (الدائنون)', unpaid: 'غير مسددة', all: 'الكل', draft: 'مسودة', issued: 'غير مدفوعة', partial: 'مدفوعة جزئياً', paidSt: 'مدفوعة', cancelled: 'ملغاة', date: 'التاريخ', items: 'البنود', payments: 'الدفعات', addPay: 'تسجيل دفعة', amount: 'المبلغ', method: 'الطريقة', cash: 'نقداً', transfer: 'حوالة', card: 'بطاقة', other: 'أخرى', savePay: 'حفظ الدفعة', payOk: 'سُجّلت الدفعة', badAmount: 'أدخل مبلغاً صحيحاً.', over: 'المبلغ أكبر من المتبقي. متابعة؟', noInv: 'لا فواتير.', noExp: 'لا مصروفات.', noOut: 'لا فواتير صادرة.', noDebt: 'لا ديون مفتوحة.', noPay: 'لا دفعات.', vendor: 'الجهة', discount: 'الخصم', tax: 'الضريبة', draftNo: 'المسودة لا تقبل دفعات.', cur: 'العملة', invoicesN: 'فواتير', readonly: 'للقراءة فقط', notDue: 'لم يستحق', b1: '0–30 يوماً', b2: '31–60', b3: '61–90', b4: 'أكثر من 90', oldest: 'أقدم استحقاق', days: 'يوم', limit: 'السقف', over100: 'تجاوز السقف',
+      addExp: 'إضافة مصروف', expTitle: 'الوصف', category: 'النوع', optional: 'اختياري', saveExp: 'حفظ المصروف', expOk: 'أُضيف المصروف', needTitle: 'أدخل الوصف ومبلغاً أكبر من صفر.', rate: 'سعر الصرف للدولار',
+      materials: 'مواد', equipment: 'أجهزة ومعدات', electricity: 'كهرباء', water: 'مياه', internet: 'إنترنت واتصالات', rent: 'إيجار', taxes: 'ضرائب ورسوم', maintenance: 'صيانة', transport: 'نقل وشحن',
+      month: 'الشهر', salary: 'الراتب', netPaid: 'صافي المدفوع', salRemain: 'المتبقي من الراتب', addSal: 'دفعة راتب', saveSal: 'حفظ الدفعة', salOk: 'سُجّلت الدفعة', k_salary: 'راتب', k_bonus: 'مكافأة', k_advance: 'سلفة', k_deduction: 'خصم', k_piecework: 'قطعية', noEmp: 'لا موظفين بملف راتب (يُنشأ الملف من البرنامج).', kind: 'النوع',
+      qty: 'الكمية', unit: 'الوحدة', alert: 'حد التنبيه', low: 'منخفض', lowOnly: 'المنخفض فقط', adjust: 'تعديل الكمية', inc: 'إضافة', dec: 'استهلاك', stockOk: 'حُدّثت الكمية', noStock: 'لا مواد.', bigger: 'لا يمكن استهلاك أكثر من الموجود.', intOnly: 'أدخل عدداً صحيحاً أكبر من صفر.', noteOpt: 'ملاحظة', price: 'السعر' },
+    en: { hello: 'Hello', close: 'Close', tSum: 'Summary', tDebt: 'Debts', tInv: 'Invoices', tExp: 'Expenses', tSal: 'Salaries', tStock: 'Stock', tOut: 'Outgoing', total: 'Total', paid: 'Paid', remaining: 'Remaining', invoiced: 'Invoiced', collected: 'Collected', monthPaid: 'Collected this month', monthExp: 'Expenses this month', payables: 'Owed to external labs', receivable: 'Receivable (debtors)', payable: 'Payable (creditors)', unpaid: 'Unpaid', all: 'All', draft: 'Draft', issued: 'Unpaid', partial: 'Partially paid', paidSt: 'Paid', cancelled: 'Cancelled', date: 'Date', items: 'Items', payments: 'Payments', addPay: 'Record payment', amount: 'Amount', method: 'Method', cash: 'Cash', transfer: 'Transfer', card: 'Card', other: 'Other', savePay: 'Save payment', payOk: 'Payment recorded', badAmount: 'Enter a valid amount.', over: 'Amount exceeds the remaining balance. Continue?', noInv: 'No invoices.', noExp: 'No expenses.', noOut: 'No outgoing invoices.', noDebt: 'No open debts.', noPay: 'No payments.', vendor: 'Payee', discount: 'Discount', tax: 'Tax', draftNo: 'Drafts cannot take payments.', cur: 'Currency', invoicesN: 'invoices', readonly: 'Read-only', notDue: 'Not due', b1: '0–30 days', b2: '31–60', b3: '61–90', b4: 'Over 90', oldest: 'Oldest due', days: 'days', limit: 'Limit', over100: 'Over limit',
+      addExp: 'Add expense', expTitle: 'Description', category: 'Category', optional: 'optional', saveExp: 'Save expense', expOk: 'Expense added', needTitle: 'Enter a description and an amount above zero.', rate: 'Rate per USD',
+      materials: 'Materials', equipment: 'Equipment', electricity: 'Electricity', water: 'Water', internet: 'Internet & phone', rent: 'Rent', taxes: 'Taxes & fees', maintenance: 'Maintenance', transport: 'Transport',
+      month: 'Month', salary: 'Salary', netPaid: 'Net paid', salRemain: 'Remaining salary', addSal: 'Salary payment', saveSal: 'Save payment', salOk: 'Payment recorded', k_salary: 'Salary', k_bonus: 'Bonus', k_advance: 'Advance', k_deduction: 'Deduction', k_piecework: 'Piecework', noEmp: 'No employees with a salary file (created from the app).', kind: 'Type',
+      qty: 'Quantity', unit: 'Unit', alert: 'Alert level', low: 'Low', lowOnly: 'Low only', adjust: 'Adjust quantity', inc: 'Add', dec: 'Consume', stockOk: 'Quantity updated', noStock: 'No items.', bigger: 'Cannot consume more than in stock.', intOnly: 'Enter a whole number above zero.', noteOpt: 'Note', price: 'Price' },
+    fr: { hello: 'Bonjour', close: 'Fermer', tSum: 'Résumé', tDebt: 'Dettes', tInv: 'Factures', tExp: 'Dépenses', tSal: 'Salaires', tStock: 'Stock', tOut: 'Sortantes', total: 'Total', paid: 'Payé', remaining: 'Reste', invoiced: 'Facturé', collected: 'Encaissé', monthPaid: 'Encaissé ce mois', monthExp: 'Dépenses du mois', payables: 'Dû aux labos externes', receivable: 'À recevoir (débiteurs)', payable: 'À payer (créanciers)', unpaid: 'Impayées', all: 'Toutes', draft: 'Brouillon', issued: 'Impayée', partial: 'Partiellement payée', paidSt: 'Payée', cancelled: 'Annulée', date: 'Date', items: 'Lignes', payments: 'Versements', addPay: 'Enregistrer un versement', amount: 'Montant', method: 'Mode', cash: 'Espèces', transfer: 'Virement', card: 'Carte', other: 'Autre', savePay: 'Enregistrer', payOk: 'Versement enregistré', badAmount: 'Saisissez un montant valide.', over: 'Le montant dépasse le reste dû. Continuer ?', noInv: 'Aucune facture.', noExp: 'Aucune dépense.', noOut: 'Aucune facture sortante.', noDebt: 'Aucune dette ouverte.', noPay: 'Aucun versement.', vendor: 'Bénéficiaire', discount: 'Remise', tax: 'Taxe', draftNo: "Un brouillon n'accepte pas de versement.", cur: 'Devise', invoicesN: 'factures', readonly: 'Lecture seule', notDue: 'Non échue', b1: '0–30 jours', b2: '31–60', b3: '61–90', b4: 'Plus de 90', oldest: 'Plus ancienne échéance', days: 'j', limit: 'Plafond', over100: 'Plafond dépassé',
+      addExp: 'Ajouter une dépense', expTitle: 'Description', category: 'Catégorie', optional: 'facultatif', saveExp: 'Enregistrer la dépense', expOk: 'Dépense ajoutée', needTitle: 'Saisissez une description et un montant supérieur à zéro.', rate: 'Taux pour 1 USD',
+      materials: 'Matières', equipment: 'Équipements', electricity: 'Électricité', water: 'Eau', internet: 'Internet et téléphone', rent: 'Loyer', taxes: 'Impôts et taxes', maintenance: 'Maintenance', transport: 'Transport',
+      month: 'Mois', salary: 'Salaire', netPaid: 'Net payé', salRemain: 'Reste du salaire', addSal: 'Paiement de salaire', saveSal: 'Enregistrer', salOk: 'Paiement enregistré', k_salary: 'Salaire', k_bonus: 'Prime', k_advance: 'Avance', k_deduction: 'Retenue', k_piecework: 'À la pièce', noEmp: "Aucun employé avec fiche de salaire (créée depuis l'application).", kind: 'Type',
+      qty: 'Quantité', unit: 'Unité', alert: "Seuil d'alerte", low: 'Bas', lowOnly: 'Bas seulement', adjust: 'Ajuster la quantité', inc: 'Ajouter', dec: 'Consommer', stockOk: 'Quantité mise à jour', noStock: 'Aucun article.', bigger: 'Impossible de consommer plus que le stock.', intOnly: 'Saisissez un entier supérieur à zéro.', noteOpt: 'Remarque', price: 'Prix' }
   };
   var A = APO_STAFF, c = A.ctx, t = c.t, esc = c.esc;
   c.addStrings(S);
-  var CFG = window.APO_STAFF_CFG, tab = 'sum', q = '', flt = 'unpaid', ME = null, D = null;
-  var STC = { draft: '#6b7c93', issued: '#dc2626', partial: '#f59e0b', paid: '#16a34a' };
+  var CFG = window.APO_STAFF_CFG, tab = 'sum', q = '', flt = 'unpaid', ME = null, D = null, lowOnly = false;
+  var STC = { draft: '#6b7c93', issued: '#dc2626', partial: '#f59e0b', paid: '#16a34a', cancelled: '#64748b' };
+  var CATS = ['materials', 'equipment', 'electricity', 'water', 'internet', 'rent', 'taxes', 'maintenance', 'transport', 'other'];
 
-  /* ---- المال: نفس منطق التطبيق (الكسور 2 / 3 للدينارات، تقليم الأصفار لعملات بلا كسور) ---- */
+  /* ---- المال: نفس منطق التطبيق ---- */
   function dec(code) { return ['BHD', 'KWD', 'OMR', 'JOD', 'TND', 'LYD'].indexOf(code) >= 0 ? 3 : 2; }
   function trim0(code) { return ['IQD', 'LBP', 'SYP', 'YER', 'SOS', 'DJF', 'KMF'].indexOf(code) >= 0; }
   function money(v, code) {
@@ -52,9 +66,42 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
     var taxable = Math.max(sub - (Number(inv.discount) || 0), 0), total = taxable + taxable * (Number(inv.tax_percent) || 0) / 100, paid = Number(inv.paid) || 0;
     return { sub: sub, total: total, paid: paid, rem: total - paid };
   }
+  function hasOpen(status, rem, cur) { return status !== 'draft' && status !== 'cancelled' && rem > tol(cur); }
   function ymd(d) { return c.fmtDate(d); }
   function monthKey(d) { return String(d || '').slice(0, 7); }
-  var NOWM = (function () { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); })();
+  function curMonth() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
+  var NOWM = curMonth(), salMonth = NOWM;
+  function num(v) { var x = Number(v); return isFinite(x) ? x : 0; }
+  function parseAmt(raw) { return parseFloat(String(raw || '').trim().replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(',', '.')); }
+
+  /* ---- دفتر الديون (مطابق لـ debts_service.dart) ---- */
+  function dayNum(s) { var d = new Date(s); if (isNaN(d)) return null; return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); }
+  function ageDays(due) { if (!due) return null; var a = dayNum(new Date()) - dayNum(due); return a < 0 ? null : a; }
+  function bucket(due) { var a = ageDays(due); if (a === null) return 0; return a <= 30 ? 1 : a <= 60 ? 2 : a <= 90 ? 3 : 4; }
+  function buildDebts(d) {
+    var deliv = {}, recvd = {}, limits = {};
+    d.cases.forEach(function (r) { if (r.delivered_at) deliv[r.id] = r.delivered_at; });
+    d.ocases.forEach(function (r) { if (r.received_at) recvd[r.id] = r.received_at; });
+    d.clients.forEach(function (r) { var l = Number(r.credit_limit); if (l > 0) limits['c:' + r.id] = { amount: l, cur: r.currency || 'USD' }; });
+    d.labs.forEach(function (r) { var l = Number(r.credit_limit); if (l > 0 && r.credit_currency) limits['o:' + r.id] = { amount: l, cur: r.credit_currency }; });
+    function dueOf(m, items, map) {
+      if (m.due_at) return m.due_at;
+      var ids = (items || []).map(function (i) { return i.case_id || i.outgoing_case_id; }).filter(Boolean);
+      if (!ids.length) return m.issued_at;
+      var ds = ids.map(function (id) { return map[id]; }).filter(Boolean).sort();
+      return ds.length ? ds[0] : null;
+    }
+    var recv = [], pay = [];
+    d.inv.forEach(function (i) { var T = totals(i, 'invoice_items'); if (hasOpen(i.status, T.rem, i.currency)) recv.push({ inv: i, party: i.client_id, name: (i.clients && i.clients.name) || '—', cur: i.currency || 'USD', rem: T.rem, due: dueOf(i, i.invoice_items, deliv), out: false }); });
+    d.out.forEach(function (o) { var T = totals(o, 'outgoing_invoice_items'); if (hasOpen(o.status, T.rem, o.currency)) pay.push({ inv: o, party: o.external_lab_id, name: (o.external_labs && o.external_labs.name) || '—', cur: o.currency || 'USD', rem: T.rem, due: dueOf(o, o.outgoing_invoice_items, recvd), out: true }); });
+    return { recv: recv, pay: pay, limits: limits };
+  }
+  function byCurrency(items) { var m = {}; items.forEach(function (x) { var e = m[x.cur] = m[x.cur] || { total: 0, b: [0, 0, 0, 0, 0], n: 0 }; e.total += x.rem; e.b[bucket(x.due)] += x.rem; e.n++; }); return m; }
+  function byParty(items, limits) {
+    var m = {};
+    items.forEach(function (x) { var k = x.party + '|' + x.cur, e = m[k] = m[k] || { name: x.name, cur: x.cur, total: 0, n: 0, oldest: 0, lim: limits[(x.out ? 'o:' : 'c:') + x.party] }; e.total += x.rem; e.n++; var a = ageDays(x.due) || 0; if (a > e.oldest) e.oldest = a; });
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return b.total - a.total; });
+  }
 
   CFG.identify = function (ctx) {
     return ctx.get('technicians?select=*&user_id=eq.' + ctx.uid() + '&deleted_at=is.null&limit=1').then(function (rows) {
@@ -67,40 +114,64 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
     });
   };
 
+  function soft(p) { return p.catch(function (e) { if (e && e.message === 'session') throw e; return []; }); }
   CFG.load = function (ctx) {
     return Promise.all([
-      ctx.get('invoices?select=*,clients(name),invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=800'),
-      ctx.get('payments?select=*&order=paid_at.desc&limit=4000'),
-      ctx.get('expenses?select=*&deleted_at=is.null&order=spent_at.desc&limit=600'),
-      ctx.get('outgoing_invoices?select=*,external_labs(name),outgoing_invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=500')
+      ctx.get('invoices?select=*,clients(name),invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=1500'),
+      ctx.get('payments?select=*&order=paid_at.desc&limit=5000'),
+      ctx.get('expenses?select=*&deleted_at=is.null&order=spent_at.desc&limit=800'),
+      ctx.get('outgoing_invoices?select=*,external_labs(name),outgoing_invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=800'),
+      soft(ctx.get('cases?select=id,delivered_at&delivered_at=not.is.null&deleted_at=is.null&limit=20000')),
+      soft(ctx.get('outgoing_cases?select=id,received_at&received_at=not.is.null&deleted_at=is.null&limit=20000')),
+      soft(ctx.get('clients?select=id,credit_limit,currency&deleted_at=is.null&limit=5000')),
+      soft(ctx.get('external_labs?select=id,credit_limit,credit_currency&deleted_at=is.null&limit=2000')),
+      soft(ctx.get('employees?select=*&deleted_at=is.null&order=full_name.asc&limit=500')),
+      soft(ctx.get('salary_payments?select=*&deleted_at=is.null&order=paid_at.desc&limit=6000')),
+      soft(ctx.get('inventory?select=*&deleted_at=is.null&order=name.asc&limit=3000')),
+      soft(ctx.get('currencies?select=code,per_usd&order=code.asc&limit=100'))
     ]).then(function (r) {
       var payBy = {}; (r[1] || []).forEach(function (p) { (payBy[p.invoice_id] = payBy[p.invoice_id] || []).push(p); });
-      D = { inv: r[0] || [], pay: r[1] || [], payBy: payBy, exp: r[2] || [], out: r[3] || [] };
+      D = { inv: r[0] || [], pay: r[1] || [], payBy: payBy, exp: r[2] || [], out: r[3] || [], cases: r[4], ocases: r[5], clients: r[6], labs: r[7], emps: r[8], sal: r[9], stock: r[10], curs: r[11] && r[11].length ? r[11] : [{ code: 'USD', per_usd: 1 }] };
+      D.debts = buildDebts(D);
       return D;
     });
   };
 
   function stPill(s) { var k = s === 'paid' ? 'paidSt' : s; return '<span class="pill" style="background:' + (STC[s] || '#64748b') + '">' + esc(t(k)) + '</span>'; }
-  function isUnpaid(i) { return i.status === 'issued' || i.status === 'partial'; }
-
-  function byCur(list, fn) { var m = {}; list.forEach(function (x) { var cc = x.currency || 'USD'; m[cc] = (m[cc] || 0) + fn(x); }); return m; }
+  function byCur(list, fn) { var m = {}; list.forEach(function (x) { var cc = x.currency || x.cur || 'USD'; m[cc] = (m[cc] || 0) + fn(x); }); return m; }
   function curBlock(label, m, cls) {
     var ks = Object.keys(m).filter(function (k) { return Math.abs(m[k]) > 0.0000001; });
     return '<div class="stat"><div class="l">' + esc(label) + '</div>' + (ks.length ? ks.map(function (k) { return '<div class="big ' + (cls || '') + '">' + money(m[k], k) + '</div>'; }).join('') : '<div class="big">—</div>') + '</div>';
   }
+  var BNAMES = ['notDue', 'b1', 'b2', 'b3', 'b4'];
 
   function summary(d) {
-    var live = d.inv.filter(function (i) { return i.status !== 'draft'; });
-    var unp = live.filter(function (i) { return isUnpaid(i) && totals(i, 'invoice_items').rem > tol(i.currency); });
-    var rem = byCur(unp, function (i) { return totals(i, 'invoice_items').rem; });
+    var live = d.inv.filter(function (i) { return i.status !== 'draft' && i.status !== 'cancelled'; });
+    var rem = {}, remOut = {};
+    d.debts.recv.forEach(function (x) { rem[x.cur] = (rem[x.cur] || 0) + x.rem; });
+    d.debts.pay.forEach(function (x) { remOut[x.cur] = (remOut[x.cur] || 0) + x.rem; });
     var inv = byCur(live, function (i) { return totals(i, 'invoice_items').total; });
-    var col = byCur(live, function (i) { return Number(i.paid) || 0; });
+    var col = byCur(live, function (i) { return num(i.paid); });
     var invMap = {}; d.inv.forEach(function (i) { invMap[i.id] = i; });
-    var mp = {}; d.pay.forEach(function (p) { if (monthKey(p.paid_at) === NOWM) { var i = invMap[p.invoice_id]; var cc = (i && i.currency) || 'USD'; mp[cc] = (mp[cc] || 0) + (Number(p.amount) || 0); } });
-    var me = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) { var cc = e.currency || 'USD'; me[cc] = (me[cc] || 0) + (Number(e.amount) || 0); } });
-    var oun = d.out.filter(function (o) { return o.status !== 'draft'; });
-    var orem = byCur(oun, function (o) { var x = totals(o, 'outgoing_invoice_items').rem; return x > tol(o.currency) ? x : 0; });
-    return '<div class="grid" style="margin-top:12px">' + curBlock(t('remaining') + ' (' + unp.length + ' ' + t('invoicesN') + ')', rem, 'red') + curBlock(t('invoiced'), inv) + curBlock(t('collected'), col, 'grn') + curBlock(t('monthPaid'), mp, 'grn') + curBlock(t('monthExp'), me) + curBlock(t('payables'), orem, 'red') + '</div>';
+    var mp = {}; d.pay.forEach(function (p) { if (monthKey(p.paid_at) === NOWM) { var i = invMap[p.invoice_id]; var cc = (i && i.currency) || 'USD'; mp[cc] = (mp[cc] || 0) + num(p.amount); } });
+    var me = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) { var cc = e.currency || 'USD'; me[cc] = (me[cc] || 0) + num(e.amount); } });
+    return '<div class="grid" style="margin-top:12px">' + curBlock(t('receivable') + ' (' + d.debts.recv.length + ')', rem, 'red') + curBlock(t('payable') + ' (' + d.debts.pay.length + ')', remOut, 'red') + curBlock(t('invoiced'), inv) + curBlock(t('collected'), col, 'grn') + curBlock(t('monthPaid'), mp, 'grn') + curBlock(t('monthExp'), me) + '</div>';
+  }
+
+  function debtSection(title, items, limits) {
+    var byc = byCurrency(items), parties = byParty(items, limits), ks = Object.keys(byc);
+    var h = '<h2>' + esc(title) + ' (' + items.length + ')</h2>';
+    if (!items.length) return h + '<div class="empty">' + esc(t('noDebt')) + '</div>';
+    ks.forEach(function (k) {
+      var e = byc[k];
+      h += '<div class="card"><div class="row"><b class="big red" style="font-size:18px">' + money(e.total, k) + '</b><span class="sub">' + e.n + ' ' + esc(t('invoicesN')) + '</span></div><div class="kv">' + e.b.map(function (v, i) { return v > tol(k) ? '<span>' + esc(t(BNAMES[i])) + ': <b>' + money(v, k) + '</b></span>' : ''; }).join('') + '</div></div>';
+    });
+    var ql = q.trim().toLowerCase();
+    parties.filter(function (p) { return !ql || p.name.toLowerCase().indexOf(ql) >= 0; }).forEach(function (p) {
+      var ratio = p.lim && p.lim.cur === p.cur && p.lim.amount > 0 ? p.total / p.lim.amount : null;
+      h += '<div class="card"><div class="row"><b>' + esc(p.name) + '</b><b class="red">' + money(p.total, p.cur) + '</b></div><div class="kv"><span>' + p.n + ' ' + esc(t('invoicesN')) + '</span>' + (p.oldest ? '<span>' + esc(t('oldest')) + ': <b>' + p.oldest + ' ' + esc(t('days')) + '</b></span>' : '') + (ratio !== null ? '<span class="' + (ratio >= 1 ? 'red' : '') + '">' + esc(t('limit')) + ': <b>' + Math.round(ratio * 100) + '%</b>' + (ratio >= 1 ? ' — ' + esc(t('over100')) : '') + '</span>' : '') + '</div></div>';
+    });
+    return h;
   }
 
   function invCard(i, kind) {
@@ -109,30 +180,27 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
     return '<div class="card hv" data-' + (kind === 'out' ? 'out' : 'inv') + '="' + i.id + '" style="cursor:pointer"><div class="row"><div><span class="no ltr">#' + esc(i.invoice_no) + '</span> ' + esc(name || '') + '</div>' + stPill(i.status) + '</div>' +
       '<div class="kv"><span>' + esc(t('total')) + ': ' + money(T.total, i.currency) + '</span><span>' + esc(t('paid')) + ': ' + money(T.paid, i.currency) + '</span><span>' + esc(t('remaining')) + ': <b class="' + (T.rem > tol(i.currency) ? 'red' : 'grn') + '">' + money(T.rem, i.currency) + '</b></span><span>' + esc(ymd(i.issued_at)) + '</span></div></div>';
   }
-
   function itemsHtml(i, key) {
     var its = i[key] || [];
     return its.length ? '<div class="card">' + its.map(function (x) { return '<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><span>' + esc(x.description || '') + '</span><span class="sub num">' + esc(x.qty) + ' × ' + esc(x.unit_price) + '</span></div>'; }).join('') + '</div>' : '';
   }
-
   function openInvoice(id, kind) {
     var i = (kind === 'out' ? D.out : D.inv).filter(function (x) { return x.id === id; })[0]; if (!i) return;
     var key = kind === 'out' ? 'outgoing_invoice_items' : 'invoice_items', T = totals(i, key), pays = kind === 'out' ? [] : (D.payBy[id] || []);
     var name = kind === 'out' ? (i.external_labs && i.external_labs.name) : (i.clients && i.clients.name);
     var h = '<div class="row"><div><span class="no ltr">#' + esc(i.invoice_no) + '</span> ' + esc(name || '') + '</div>' + stPill(i.status) + '</div>' +
-      '<div class="kv"><span>' + esc(t('date')) + ': <b>' + esc(ymd(i.issued_at)) + '</b></span><span>' + esc(t('cur')) + ': <b>' + esc(i.currency) + '</b></span>' + (Number(i.discount) ? '<span>' + esc(t('discount')) + ': <b class="num">' + esc(i.discount) + '</b></span>' : '') + (Number(i.tax_percent) ? '<span>' + esc(t('tax')) + ': <b class="num">' + esc(i.tax_percent) + '%</b></span>' : '') + '</div>' +
+      '<div class="kv"><span>' + esc(t('date')) + ': <b>' + esc(ymd(i.issued_at)) + '</b></span><span>' + esc(t('cur')) + ': <b>' + esc(i.currency) + '</b></span>' + (num(i.discount) ? '<span>' + esc(t('discount')) + ': <b class="num">' + esc(i.discount) + '</b></span>' : '') + (num(i.tax_percent) ? '<span>' + esc(t('tax')) + ': <b class="num">' + esc(i.tax_percent) + '%</b></span>' : '') + '</div>' +
       '<h2>' + esc(t('items')) + '</h2>' + itemsHtml(i, key) +
       '<div class="grid"><div class="stat"><div class="l">' + esc(t('total')) + '</div><div class="big">' + money(T.total, i.currency) + '</div></div><div class="stat"><div class="l">' + esc(t('paid')) + '</div><div class="big grn">' + money(T.paid, i.currency) + '</div></div><div class="stat"><div class="l">' + esc(t('remaining')) + '</div><div class="big ' + (T.rem > tol(i.currency) ? 'red' : 'grn') + '">' + money(T.rem, i.currency) + '</div></div></div>';
     if (kind !== 'out') {
-      h += '<h2>' + esc(t('payments')) + '</h2>' + (pays.length ? pays.map(function (p) { return '<div class="card"><div class="row"><b>' + money(Number(p.amount) || 0, i.currency) + '</b><span class="who ltr">' + esc(ymd(p.paid_at)) + '</span></div><div class="sub">' + esc(t(p.method) === p.method ? p.method : t(p.method)) + (p.note ? ' — ' + esc(p.note) : '') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noPay')) + '</div>');
-      h += '<div class="acts">' + (i.status === 'draft' ? '<span class="sub">' + esc(t('draftNo')) + '</span>' : '<button class="btn" id="ap">＋ ' + esc(t('addPay')) + '</button>') + '<button class="btn alt" id="cl">' + esc(t('close')) + '</button></div>';
+      h += '<h2>' + esc(t('payments')) + '</h2>' + (pays.length ? pays.map(function (p) { return '<div class="card"><div class="row"><b>' + money(num(p.amount), i.currency) + '</b><span class="who ltr">' + esc(ymd(p.paid_at)) + '</span></div><div class="sub">' + esc(t(p.method) === p.method ? p.method : t(p.method)) + (p.note ? ' — ' + esc(p.note) : '') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noPay')) + '</div>');
+      h += '<div class="acts">' + (i.status === 'draft' || i.status === 'cancelled' ? '<span class="sub">' + esc(t('draftNo')) + '</span>' : '<button class="btn" id="ap">＋ ' + esc(t('addPay')) + '</button>') + '<button class="btn alt" id="cl">' + esc(t('close')) + '</button></div>';
     } else h += '<div class="sub" style="margin-top:8px">' + esc(t('readonly')) + '</div><button class="btn alt block" id="cl">' + esc(t('close')) + '</button>';
     c.modal(h, function (m) {
       m.querySelector('#cl').onclick = function () { m.remove(); };
       var ap = m.querySelector('#ap'); if (ap) ap.onclick = function () { m.remove(); payForm(i, T); };
     });
   }
-
   function payForm(i, T) {
     var methods = ['cash', 'transfer', 'card', 'other'];
     c.modal('<h3 style="margin:0 0 6px">' + esc(t('addPay')) + ' — #' + esc(i.invoice_no) + '</h3><div class="sub">' + esc(t('remaining')) + ': ' + money(Math.max(T.rem, 0), i.currency) + '</div>' +
@@ -142,8 +210,7 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
       '<div class="acts"><button class="btn ok" id="ok">' + esc(t('savePay')) + '</button><button class="btn alt" id="no">' + esc(t('cancel')) + '</button></div>', function (m) {
       m.querySelector('#no').onclick = function () { m.remove(); };
       m.querySelector('#ok').onclick = function () {
-        var raw = m.querySelector('#am').value.trim().replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(',', '.');
-        var v = parseFloat(raw);
+        var v = parseAmt(m.querySelector('#am').value);
         if (!(v > 0) || !isFinite(v)) { c.toast(t('badAmount'), true); return; }
         if (v > T.rem + tol(i.currency) && !window.confirm(t('over'))) return;
         var btn = m.querySelector('#ok'); btn.disabled = true;
@@ -155,41 +222,138 @@ select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
     });
   }
   var refresh = function () { var b = document.getElementById('rf'); if (b) b.click(); };
+  function curOptions(sel) { return D.curs.map(function (x) { return '<option value="' + esc(x.code) + '"' + (x.code === sel ? ' selected' : '') + '>' + esc(x.code) + '</option>'; }).join(''); }
+  function rateOf(code) { var r = D.curs.filter(function (x) { return x.code === code; })[0]; var v = r ? Number(r.per_usd) : 1; return v > 0 ? v : 1; }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
 
-  function expLabel(k) { var v = t(k); return v === k ? k : v; }
+  /* ---- المصروفات ---- */
+  function expForm() {
+    c.modal('<h3 style="margin:0 0 6px">' + esc(t('addExp')) + '</h3>' +
+      '<label class="sub">' + esc(t('category')) + '</label><select id="ct">' + CATS.map(function (k) { return '<option value="' + k + '">' + esc(t(k)) + '</option>'; }).join('') + '</select>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('expTitle')) + '</label><input id="ti">' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('vendor')) + ' (' + esc(t('optional')) + ')</label><input id="vd">' +
+      '<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:3"><label class="sub">' + esc(t('amount')) + '</label><input id="am" inputmode="decimal" class="ltr" placeholder="0"></div><div style="flex:2"><label class="sub">' + esc(t('cur')) + '</label><select id="cu">' + curOptions('USD') + '</select></div></div>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('date')) + '</label><input id="dt" type="date" class="ltr" value="' + today() + '">' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('note')) + ' (' + esc(t('optional')) + ')</label><input id="nt">' +
+      '<div class="acts"><button class="btn ok" id="ok">' + esc(t('saveExp')) + '</button><button class="btn alt" id="no">' + esc(t('cancel')) + '</button></div>', function (m) {
+      m.querySelector('#no').onclick = function () { m.remove(); };
+      m.querySelector('#ok').onclick = function () {
+        var title = m.querySelector('#ti').value.trim(), a = parseAmt(m.querySelector('#am').value);
+        if (!title || !(a > 0)) { c.toast(t('needTitle'), true); return; }
+        var cu = m.querySelector('#cu').value, vd = m.querySelector('#vd').value.trim(), nt = m.querySelector('#nt').value.trim();
+        var btn = m.querySelector('#ok'); btn.disabled = true;
+        c.post('expenses', { category: m.querySelector('#ct').value, title: title, vendor: vd || null, amount: a, currency: cu, per_usd: rateOf(cu), spent_at: m.querySelector('#dt').value || today(), note: nt || null })
+          .then(function () { c.logActivity('expense_add', null, title + ' ' + a + ' ' + cu, null, 'expense'); m.remove(); c.toast(t('expOk')); refresh(); })
+          .catch(function (e) { btn.disabled = false; if (e && e.message === 'session') return; c.toast(e && e.message || String(e), true); });
+      };
+    });
+  }
+
+  /* ---- الرواتب (صافي المدفوع كما في البرنامج: خصم سالب، القطعية مستثناة، بالدولار ثم لعملة الموظف) ---- */
+  function empNet(e) {
+    var net = 0;
+    D.sal.forEach(function (p) { if (p.employee_id === e.id && p.month === salMonth && p.kind !== 'piecework') { var usd = (p.kind === 'deduction' ? -num(p.amount) : num(p.amount)) / (num(p.per_usd) > 0 ? num(p.per_usd) : 1); net += usd; } });
+    return net * (num(e.per_usd) > 0 ? num(e.per_usd) : 1);
+  }
+  function monthShift(m, k) { var y = parseInt(m.slice(0, 4), 10), mo = parseInt(m.slice(5), 10) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); }
+  function salForm(e) {
+    var kinds = ['salary', 'bonus', 'advance', 'deduction'];
+    c.modal('<h3 style="margin:0 0 6px">' + esc(t('addSal')) + ' — ' + esc(e.full_name) + '</h3>' +
+      '<label class="sub">' + esc(t('kind')) + '</label><select id="kd">' + kinds.map(function (k) { return '<option value="' + k + '">' + esc(t('k_' + k)) + '</option>'; }).join('') + '</select>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('month')) + '</label><input id="mo" type="month" class="ltr" value="' + salMonth + '">' +
+      '<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:3"><label class="sub">' + esc(t('amount')) + '</label><input id="am" inputmode="decimal" class="ltr" value="' + (num(e.monthly_salary) > 0 ? esc(e.monthly_salary) : '') + '"></div><div style="flex:2"><label class="sub">' + esc(t('cur')) + '</label><select id="cu">' + curOptions(e.currency || 'USD') + '</select></div></div>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('date')) + '</label><input id="dt" type="date" class="ltr" value="' + today() + '">' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('note')) + ' (' + esc(t('optional')) + ')</label><input id="nt">' +
+      '<div class="acts"><button class="btn ok" id="ok">' + esc(t('saveSal')) + '</button><button class="btn alt" id="no">' + esc(t('cancel')) + '</button></div>', function (m) {
+      m.querySelector('#no').onclick = function () { m.remove(); };
+      m.querySelector('#ok').onclick = function () {
+        var a = parseAmt(m.querySelector('#am').value), mo = m.querySelector('#mo').value;
+        if (!(a > 0)) { c.toast(t('badAmount'), true); return; }
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mo)) { c.toast(t('month'), true); return; }
+        var cu = m.querySelector('#cu').value, kd = m.querySelector('#kd').value, nt = m.querySelector('#nt').value.trim();
+        var btn = m.querySelector('#ok'); btn.disabled = true;
+        c.post('salary_payments', { employee_id: e.id, month: mo, kind: kd, amount: a, currency: cu, per_usd: rateOf(cu), paid_at: m.querySelector('#dt').value || today(), note: nt || null })
+          .then(function () { c.logActivity('salary_add', e.id, e.full_name + ' ' + kd + ' ' + a + ' ' + cu, null, 'salary'); m.remove(); c.toast(t('salOk')); refresh(); })
+          .catch(function (er) { btn.disabled = false; if (er && er.message === 'session') return; c.toast(er && er.message || String(er), true); });
+      };
+    });
+  }
+
+  /* ---- المخزون (كمية صحيحة كما في البرنامج + سجل inventory_log) ---- */
+  function stockForm(it, kind) {
+    var before = num(it.quantity);
+    c.modal('<h3 style="margin:0 0 6px">' + esc(kind === 'add' ? t('inc') : t('dec')) + ' — ' + esc(it.name) + '</h3><div class="sub">' + esc(t('qty')) + ': <b class="num">' + before + '</b> ' + esc(it.unit || '') + '</div>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('qty')) + '</label><input id="am" inputmode="numeric" class="ltr" placeholder="0">' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('noteOpt')) + '</label><input id="nt">' +
+      '<div class="acts"><button class="btn ok" id="ok">' + esc(t('done')) + '</button><button class="btn alt" id="no">' + esc(t('cancel')) + '</button></div>', function (m) {
+      m.querySelector('#no').onclick = function () { m.remove(); };
+      m.querySelector('#ok').onclick = function () {
+        var v = parseAmt(m.querySelector('#am').value);
+        if (!(v > 0) || Math.floor(v) !== v) { c.toast(t('intOnly'), true); return; }
+        var after = kind === 'add' ? before + v : before - v;
+        if (after < 0) { c.toast(t('bigger'), true); return; }
+        var nt = m.querySelector('#nt').value.trim(), btn = m.querySelector('#ok'); btn.disabled = true;
+        c.patch('inventory?id=eq.' + it.id, { quantity: after }).then(function () {
+          return c.post('inventory_log', { item_id: it.id, item_name: it.name, unit: it.unit || null, kind: kind === 'add' ? 'add' : 'consume', qty: after - before, qty_before: before, qty_after: after, note: nt || null, actor_name: ME.full_name, actor_role: 'accountant' }).catch(function () {});
+        }).then(function () { m.remove(); c.toast(t('stockOk')); refresh(); })
+          .catch(function (e) { btn.disabled = false; if (e && e.message === 'session') return; c.toast(e && e.message || String(e), true); });
+      };
+    });
+  }
 
   CFG.render = function (ctx, d, body, reload) {
     var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
-    var unpN = d.inv.filter(function (i) { return isUnpaid(i); }).length;
-    h += '<div class="tabs">' + [['sum', 'tSum', ''], ['inv', 'tInv', d.inv.length], ['cli', 'tCli', ''], ['exp', 'tExp', d.exp.length], ['out', 'tOut', d.out.length]].map(function (x) {
+    var openN = d.debts.recv.length;
+    h += '<div class="tabs">' + [['sum', 'tSum', ''], ['debt', 'tDebt', openN], ['inv', 'tInv', d.inv.length], ['exp', 'tExp', d.exp.length], ['sal', 'tSal', d.emps.length], ['stock', 'tStock', d.stock.length], ['out', 'tOut', d.out.length]].map(function (x) {
       return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + (x[2] !== '' ? '<span class="badge">' + x[2] + '</span>' : '') + '</button>';
     }).join('') + '</div>';
     var ql = q.trim().toLowerCase();
+    var searchBox = '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
     if (tab === 'sum') h += summary(d);
-    else if (tab === 'inv') {
-      var list = d.inv.filter(function (i) { return (flt === 'all' || (flt === 'unpaid' ? isUnpaid(i) : i.status === flt)) && (!ql || ('#' + i.invoice_no + ' ' + ((i.clients && i.clients.name) || '')).toLowerCase().indexOf(ql) >= 0); });
-      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div><div class="tabs">' + [['unpaid', t('unpaid') + ' (' + unpN + ')'], ['all', t('all')], ['paid', t('paidSt')], ['draft', t('draft')]].map(function (x) { return '<button data-flt="' + x[0] + '" class="' + (flt === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
+    else if (tab === 'debt') {
+      h += searchBox + debtSection(t('receivable'), d.debts.recv, d.debts.limits) + debtSection(t('payable'), d.debts.pay, d.debts.limits);
+    } else if (tab === 'inv') {
+      var openIds = {}; d.debts.recv.forEach(function (x) { openIds[x.inv.id] = 1; });
+      var list = d.inv.filter(function (i) { var okF = flt === 'all' ? true : flt === 'unpaid' ? !!openIds[i.id] : i.status === flt; return okF && (!ql || ('#' + i.invoice_no + ' ' + ((i.clients && i.clients.name) || '')).toLowerCase().indexOf(ql) >= 0); });
+      h += searchBox + '<div class="tabs">' + [['unpaid', t('unpaid') + ' (' + openN + ')'], ['all', t('all')], ['paid', t('paidSt')], ['draft', t('draft')]].map(function (x) { return '<button data-flt="' + x[0] + '" class="' + (flt === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
       h += list.length ? list.slice(0, 200).map(function (i) { return invCard(i, 'in'); }).join('') : '<div class="empty">' + esc(t('noInv')) + '</div>';
-    } else if (tab === 'cli') {
-      var g = {};
-      d.inv.forEach(function (i) { if (!isUnpaid(i)) return; var T = totals(i, 'invoice_items'); if (T.rem <= tol(i.currency)) return; var nm = (i.clients && i.clients.name) || '—'; g[nm] = g[nm] || { n: 0, m: {} }; g[nm].n++; g[nm].m[i.currency] = (g[nm].m[i.currency] || 0) + T.rem; });
-      var names = Object.keys(g).sort();
-      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
-      names = names.filter(function (n) { return !ql || n.toLowerCase().indexOf(ql) >= 0; });
-      h += names.length ? names.map(function (n) { return '<div class="card"><div class="row"><b>' + esc(n) + '</b><span class="sub">' + g[n].n + ' ' + esc(t('invoicesN')) + '</span></div><div class="kv">' + Object.keys(g[n].m).map(function (k) { return '<span class="red big" style="font-size:16px">' + money(g[n].m[k], k) + '</span>'; }).join('') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noCli')) + '</div>';
     } else if (tab === 'exp') {
-      var tot = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) tot[e.currency || 'USD'] = (tot[e.currency || 'USD'] || 0) + (Number(e.amount) || 0); });
-      h += '<div class="grid" style="margin-top:10px">' + curBlock(t('monthExp'), tot) + '</div>';
-      h += d.exp.length ? d.exp.slice(0, 200).map(function (e) { return '<div class="card"><div class="row"><b>' + esc(e.title || '') + '</b><span class="red num">' + money(Number(e.amount) || 0, e.currency || 'USD') + '</span></div><div class="kv"><span>' + esc(expLabel(e.category || 'other')) + '</span>' + (e.vendor ? '<span>' + esc(t('vendor')) + ': <b>' + esc(e.vendor) + '</b></span>' : '') + '<span>' + esc(ymd(e.spent_at)) + '</span></div>' + (e.note ? '<div class="sub">📝 ' + esc(e.note) + '</div>' : '') + '</div>'; }).join('') : '<div class="empty">' + esc(t('noExp')) + '</div>';
+      var tot = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) tot[e.currency || 'USD'] = (tot[e.currency || 'USD'] || 0) + num(e.amount); });
+      h += '<div class="grid" style="margin-top:10px">' + curBlock(t('monthExp'), tot) + '</div><div class="acts"><button class="btn" id="addexp">＋ ' + esc(t('addExp')) + '</button></div>';
+      h += d.exp.length ? d.exp.slice(0, 200).map(function (e) { return '<div class="card"><div class="row"><b>' + esc(e.title || '') + '</b><span class="red num">' + money(num(e.amount), e.currency || 'USD') + '</span></div><div class="kv"><span>' + esc(t(e.category || 'other')) + '</span>' + (e.vendor ? '<span>' + esc(t('vendor')) + ': <b>' + esc(e.vendor) + '</b></span>' : '') + '<span>' + esc(ymd(e.spent_at)) + '</span></div>' + (e.note ? '<div class="sub">📝 ' + esc(e.note) + '</div>' : '') + '</div>'; }).join('') : '<div class="empty">' + esc(t('noExp')) + '</div>';
+    } else if (tab === 'sal') {
+      h += '<div class="row" style="margin:10px 0"><button class="btn sm alt" id="mprev">‹</button><b class="num">' + esc(salMonth) + '</b><button class="btn sm alt" id="mnext">›</button></div>';
+      var emps = d.emps.filter(function (e) { return e.active !== false && (!ql || String(e.full_name || '').toLowerCase().indexOf(ql) >= 0); });
+      h += searchBox;
+      h += emps.length ? emps.map(function (e) {
+        var net = empNet(e), sal = num(e.monthly_salary), rem = Math.max(sal - net, 0), cu = e.currency || 'USD';
+        var pays = d.sal.filter(function (p) { return p.employee_id === e.id && p.month === salMonth; });
+        return '<div class="card"><div class="row"><b>' + esc(e.full_name) + '</b><button class="btn sm" data-sal="' + e.id + '">＋ ' + esc(t('addSal')) + '</button></div><div class="kv"><span>' + esc(t('salary')) + ': <b>' + money(sal, cu) + '</b></span><span>' + esc(t('netPaid')) + ': <b class="grn">' + money(net, cu) + '</b></span><span>' + esc(t('salRemain')) + ': <b class="' + (rem > tol(cu) ? 'red' : 'grn') + '">' + money(rem, cu) + '</b></span></div>' +
+          (pays.length ? '<div class="sub" style="margin-top:6px">' + pays.map(function (p) { return esc(t('k_' + p.kind) === 'k_' + p.kind ? p.kind : t('k_' + p.kind)) + ' ' + money(num(p.amount), p.currency || cu) + ' · ' + esc(ymd(p.paid_at)); }).join('<br>') + '</div>' : '') + '</div>';
+      }).join('') : '<div class="empty">' + esc(t('noEmp')) + '</div>';
+    } else if (tab === 'stock') {
+      var items = d.stock.filter(function (it) { var low = num(it.quantity) <= num(it.alert_limit); return (!lowOnly || low) && (!ql || String(it.name || '').toLowerCase().indexOf(ql) >= 0); });
+      h += searchBox + '<div class="tabs"><button data-low="0" class="' + (!lowOnly ? 'on' : '') + '">' + esc(t('all')) + '</button><button data-low="1" class="' + (lowOnly ? 'on' : '') + '">' + esc(t('lowOnly')) + '</button></div>';
+      h += items.length ? items.slice(0, 300).map(function (it) {
+        var low = num(it.quantity) <= num(it.alert_limit);
+        return '<div class="card"><div class="row"><b>' + esc(it.name) + '</b>' + (low ? '<span class="pill" style="background:#dc2626">' + esc(t('low')) + '</span>' : '') + '</div><div class="kv"><span>' + esc(t('qty')) + ': <b class="num ' + (low ? 'red' : '') + '">' + esc(num(it.quantity)) + '</b> ' + esc(it.unit || '') + '</span>' + (num(it.alert_limit) ? '<span>' + esc(t('alert')) + ': <b class="num">' + esc(it.alert_limit) + '</b></span>' : '') + '</div><div class="acts"><button class="btn sm ok" data-st="add" data-id="' + it.id + '">＋ ' + esc(t('inc')) + '</button><button class="btn sm alt" data-st="consume" data-id="' + it.id + '">− ' + esc(t('dec')) + '</button></div></div>';
+      }).join('') : '<div class="empty">' + esc(t('noStock')) + '</div>';
     } else {
       h += d.out.length ? d.out.slice(0, 200).map(function (o) { return invCard(o, 'out'); }).join('') : '<div class="empty">' + esc(t('noOut')) + '</div>';
     }
     body.innerHTML = h;
-    body.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); CFG.render(ctx, d, body, reload); }; });
-    body.querySelectorAll('[data-flt]').forEach(function (b) { b.onclick = function () { flt = b.getAttribute('data-flt'); CFG.render(ctx, d, body, reload); }; });
-    var qi = body.querySelector('#q'); if (qi) { qi.oninput = function () { q = qi.value; var pos = qi.selectionStart; CFG.render(ctx, d, body, reload); var n = body.querySelector('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; }
+    function rr() { CFG.render(ctx, d, body, reload); }
+    body.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); q = ''; rr(); }; });
+    body.querySelectorAll('[data-flt]').forEach(function (b) { b.onclick = function () { flt = b.getAttribute('data-flt'); rr(); }; });
+    body.querySelectorAll('[data-low]').forEach(function (b) { b.onclick = function () { lowOnly = b.getAttribute('data-low') === '1'; rr(); }; });
+    var qi = body.querySelector('#q'); if (qi) { qi.oninput = function () { q = qi.value; var pos = qi.selectionStart; rr(); var n = body.querySelector('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; }
     body.querySelectorAll('[data-inv]').forEach(function (el) { el.onclick = function () { openInvoice(el.getAttribute('data-inv'), 'in'); }; });
     body.querySelectorAll('[data-out]').forEach(function (el) { el.onclick = function () { openInvoice(el.getAttribute('data-out'), 'out'); }; });
+    var ae = body.querySelector('#addexp'); if (ae) ae.onclick = expForm;
+    var mp = body.querySelector('#mprev'); if (mp) mp.onclick = function () { salMonth = monthShift(salMonth, -1); rr(); };
+    var mn = body.querySelector('#mnext'); if (mn) mn.onclick = function () { salMonth = monthShift(salMonth, 1); rr(); };
+    body.querySelectorAll('[data-sal]').forEach(function (b) { b.onclick = function () { var e = d.emps.filter(function (x) { return x.id === b.getAttribute('data-sal'); })[0]; if (e) salForm(e); }; });
+    body.querySelectorAll('[data-st]').forEach(function (b) { b.onclick = function () { var it = d.stock.filter(function (x) { return String(x.id) === b.getAttribute('data-id'); })[0]; if (it) stockForm(it, b.getAttribute('data-st')); }; });
   };
 
   CFG.codeLen = 18;
