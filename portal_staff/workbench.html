@@ -193,15 +193,55 @@
     return h + '</div>';
   }
 
+
+  /* صورة العمل: ملف واحد لكل حالة في Storage خاص + أسهم/دوائر/دبابيس/نصوص نسبية (0..1) كما في البرنامج */
+  var NCOL = ['#ef4444', '#facc15', '#22c55e', '#06b6d4', '#ffffff'];
+  function notesSvg(raw, W, H) {
+    var arr = []; try { arr = typeof raw === 'string' ? JSON.parse(raw) : (raw || []); } catch (e) { arr = []; }
+    if (!Array.isArray(arr)) return '';
+    var out = '';
+    arr.forEach(function (n, i) {
+      if (!n || !n.a || n.a.length < 4) return;
+      var col = NCOL[Math.max(0, Math.min(4, Number(n.c) || 0))], x1 = n.a[0] * W, y1 = n.a[1] * H, x2 = n.a[2] * W, y2 = n.a[3] * H, label = (n.s ? '[' + n.s + '] ' : '') + (n.t || '');
+      var st = 'stroke="' + col + '" stroke-width="5" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"';
+      if (n.k === 'arrow') {
+        var ang = Math.atan2(y2 - y1, x2 - x1), hx = 28, p1 = [x2 - hx * Math.cos(ang - 0.45), y2 - hx * Math.sin(ang - 0.45)], p2 = [x2 - hx * Math.cos(ang + 0.45), y2 - hx * Math.sin(ang + 0.45)];
+        out += '<path d="M' + x1 + ' ' + y1 + 'L' + x2 + ' ' + y2 + 'M' + p1[0] + ' ' + p1[1] + 'L' + x2 + ' ' + y2 + 'L' + p2[0] + ' ' + p2[1] + '" ' + st + '/>';
+      } else if (n.k === 'circle') {
+        out += '<circle cx="' + x1 + '" cy="' + y1 + '" r="' + Math.max(8, Math.hypot(x2 - x1, y2 - y1)) + '" ' + st + '/>';
+      } else if (n.k === 'pin') {
+        out += '<circle cx="' + x1 + '" cy="' + y1 + '" r="14" fill="' + col + '" stroke="#000" stroke-opacity=".5" stroke-width="2" vector-effect="non-scaling-stroke"/><text x="' + x1 + '" y="' + (y1 + 6) + '" font-size="18" text-anchor="middle" fill="#000" font-weight="700">' + (i + 1) + '</text>';
+      } else if (n.k === 'text') {
+        out += '<text x="' + x1 + '" y="' + y1 + '" font-size="34" fill="' + col + '" stroke="#000" stroke-width="1" paint-order="stroke" font-weight="700">' + esc(n.t || '') + '</text>';
+        return;
+      }
+      if (label && n.k !== 'text') out += '<text x="' + Math.min(x1 + 12, 900) + '" y="' + Math.max(y1 - 14, 30) + '" font-size="30" fill="' + col + '" stroke="#000" stroke-width="1" paint-order="stroke" font-weight="700">' + esc(label) + '</text>';
+    });
+    return out;
+  }
+  function openPhoto(caseId) {
+    var m = c.modal('<div class="empty"><span class="spin">⟳</span> ' + esc(t('loading')) + '</div>');
+    c.get('case_photos?select=storage_path,annotations,width,height,size_bytes&case_id=eq.' + caseId + '&deleted_at=is.null&limit=1').then(function (rows) {
+      var r = rows && rows[0];
+      if (!r || !(Number(r.size_bytes) > 0) || !r.storage_path) { m.firstChild.innerHTML = '<div class="empty">' + esc(t('nophoto')) + '</div><button class="btn alt block" id="x">' + esc(t('close')) + '</button>'; m.querySelector('#x').onclick = function () { m.remove(); }; return; }
+      return c.blob('case-photos', r.storage_path).then(function (blob) {
+        var W = 1000, H = (Number(r.width) > 0 && Number(r.height) > 0) ? Math.round(1000 * r.height / r.width) : 1000, url = URL.createObjectURL(blob), svg = notesSvg(r.annotations, W, H);
+        m.firstChild.innerHTML = '<div style="position:relative;line-height:0"><img src="' + url + '" style="width:100%;border-radius:12px;display:block" alt="">' + (svg ? '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">' + svg + '</svg>' : '') + '</div><button class="btn alt block" id="x">' + esc(t('close')) + '</button>';
+        m.querySelector('#x').onclick = function () { URL.revokeObjectURL(url); m.remove(); };
+      });
+    }).catch(function (e) { if (e && e.message === 'session') return; m.firstChild.innerHTML = '<div class="empty">' + esc(t('photoerr')) + '</div><button class="btn alt block" id="x">' + esc(t('close')) + '</button>'; m.querySelector('#x').onclick = function () { m.remove(); }; });
+  }
   function openDetail(id) {
     var cs = caseOf(id); if (!cs) return;
     var ss = stagesOf(id);
     var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
       (ss.length ? chipsHtml(ss) : '<div class="empty">' + esc(t('nostage')) + '</div>');
     ss.forEach(function (s) { if (!s.technician_id || s.technician_id === ME.id) { h += stageCard(s, false); } });
+    h += '<div class="acts"><button class="btn alt" id="ph">📷 ' + esc(t('photo')) + '</button></div>';
     h += '<button class="btn alt block" id="cl">' + esc(t('close')) + '</button>';
     c.modal(h, function (m) {
       m.querySelector('#cl').onclick = function () { m.remove(); };
+      m.querySelector('#ph').onclick = function () { openPhoto(id); };
       bindActs(m, function () { m.remove(); });
     });
   }
