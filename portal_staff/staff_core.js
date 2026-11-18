@@ -67,10 +67,10 @@
   function post(table, row) { return api('POST', table, row, { Prefer: 'return=minimal' }); }
   function patch(path, row) { return api('PATCH', path, row, { Prefer: 'return=minimal' }); }
   function rpc(name, args) { return api('POST', 'rpc/' + name, args || {}); }
-  function logActivity(action, entityId, details, label) {
+  function logActivity(action, entityId, details, label, entity) {
     // نفس سجل التطبيق (activity_log). فشل التسجيل لا يعطّل العمل.
     var me = CFG._me || {};
-    post('activity_log', { action: action, entity: 'case', entity_id: entityId || null, entity_label: label || null, details: ('[portal] ' + (details || '')).trim(), actor_name: me.name || null, actor_role: CFG.role }).catch(function () {});
+    post('activity_log', { action: action, entity: entity || 'case', entity_id: entityId || null, entity_label: label || null, details: ('[portal] ' + (details || '')).trim(), actor_name: me.name || null, actor_role: CFG.role }).catch(function () {});
   }
 
   /* ---------- UI helpers ---------- */

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#7c3aed">
+<title>APO Accountant Ledger</title>
+<link rel="stylesheet" href="staff_core.css">
+<style>:root{--accent:#7c3aed;--accent2:#a78bfa;--glow:rgba(124,58,237,.38)}
+.num{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;font-weight:700}
+.big{font-size:20px;font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.stat .l{font-size:12.5px;color:var(--mute)}
+.red{color:var(--bad)}.grn{color:var(--ok)}
+select.sm{width:auto;display:inline-block;padding:7px 10px;font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.APO_STAFF_CFG = { role: "accountant" };</script>
+<script src="staff_core.js"></script>
+<script>
+/* بوابة المحاسب — بنفسجية. نفس حساب المحاسب وكوده وصلاحياته (RLS) كما في البرنامج.
+   قراءة: الفواتير والعملاء المدينون والدفعات والمصروفات والفواتير الصادرة. كتابة: تسجيل دفعة على فاتورة (فقط). */
+(function () {
+  var S = {
+    ar: { hello: 'أهلاً', close: 'إغلاق', tSum: 'الملخص', tInv: 'الفواتير', tCli: 'ذمم العملاء', tExp: 'المصروفات', tOut: 'الصادرة', inv: 'فاتورة', total: 'الإجمالي', paid: 'المدفوع', remaining: 'المتبقي', invoiced: 'المفوتر', collected: 'المحصّل', monthPaid: 'محصّل هذا الشهر', monthExp: 'مصروفات هذا الشهر', openInv: 'فواتير غير مسددة', payables: 'مستحق للمعامل الخارجية', unpaid: 'غير مسددة', all: 'الكل', draft: 'مسودة', issued: 'غير مدفوعة', partial: 'مدفوعة جزئياً', paidSt: 'مدفوعة', client: 'العميل', lab: 'المعمل', date: 'التاريخ', items: 'البنود', payments: 'الدفعات', addPay: 'تسجيل دفعة', amount: 'المبلغ', method: 'الطريقة', cash: 'نقداً', transfer: 'حوالة', card: 'بطاقة', other: 'أخرى', savePay: 'حفظ الدفعة', payOk: 'سُجّلت الدفعة', badAmount: 'أدخل مبلغاً صحيحاً.', over: 'المبلغ أكبر من المتبقي. متابعة؟', yes: 'نعم', noInv: 'لا فواتير.', noExp: 'لا مصروفات.', noOut: 'لا فواتير صادرة.', noCli: 'لا ذمم مفتوحة.', noPay: 'لا دفعات.', category: 'النوع', vendor: 'الجهة', qty: 'الكمية', price: 'السعر', discount: 'الخصم', tax: 'الضريبة', draftNo: 'المسودة لا تقبل دفعات.', cur: 'العملة', invoicesN: 'فواتير', readonly: 'للقراءة فقط', materials: 'مواد', rent: 'إيجار', utilities: 'مرافق', salaries: 'رواتب', maintenance: 'صيانة', transport: 'نقل', marketing: 'تسويق' },
+    en: { hello: 'Hello', close: 'Close', tSum: 'Summary', tInv: 'Invoices', tCli: 'Receivables', tExp: 'Expenses', tOut: 'Outgoing', inv: 'Invoice', total: 'Total', paid: 'Paid', remaining: 'Remaining', invoiced: 'Invoiced', collected: 'Collected', monthPaid: 'Collected this month', monthExp: 'Expenses this month', openInv: 'Unpaid invoices', payables: 'Owed to external labs', unpaid: 'Unpaid', all: 'All', draft: 'Draft', issued: 'Unpaid', partial: 'Partially paid', paidSt: 'Paid', client: 'Client', lab: 'Lab', date: 'Date', items: 'Items', payments: 'Payments', addPay: 'Record payment', amount: 'Amount', method: 'Method', cash: 'Cash', transfer: 'Transfer', card: 'Card', other: 'Other', savePay: 'Save payment', payOk: 'Payment recorded', badAmount: 'Enter a valid amount.', over: 'Amount exceeds the remaining balance. Continue?', yes: 'Yes', noInv: 'No invoices.', noExp: 'No expenses.', noOut: 'No outgoing invoices.', noCli: 'No open balances.', noPay: 'No payments.', category: 'Category', vendor: 'Payee', qty: 'Qty', price: 'Price', discount: 'Discount', tax: 'Tax', draftNo: 'Drafts cannot take payments.', cur: 'Currency', invoicesN: 'invoices', readonly: 'Read-only', materials: 'Materials', rent: 'Rent', utilities: 'Utilities', salaries: 'Salaries', maintenance: 'Maintenance', transport: 'Transport', marketing: 'Marketing' },
+    fr: { hello: 'Bonjour', close: 'Fermer', tSum: 'Résumé', tInv: 'Factures', tCli: 'Créances', tExp: 'Dépenses', tOut: 'Sortantes', inv: 'Facture', total: 'Total', paid: 'Payé', remaining: 'Reste', invoiced: 'Facturé', collected: 'Encaissé', monthPaid: 'Encaissé ce mois', monthExp: 'Dépenses du mois', openInv: 'Factures impayées', payables: 'Dû aux labos externes', unpaid: 'Impayées', all: 'Toutes', draft: 'Brouillon', issued: 'Impayée', partial: 'Partiellement payée', paidSt: 'Payée', client: 'Client', lab: 'Labo', date: 'Date', items: 'Lignes', payments: 'Versements', addPay: 'Enregistrer un versement', amount: 'Montant', method: 'Mode', cash: 'Espèces', transfer: 'Virement', card: 'Carte', other: 'Autre', savePay: 'Enregistrer', payOk: 'Versement enregistré', badAmount: 'Saisissez un montant valide.', over: 'Le montant dépasse le reste dû. Continuer ?', yes: 'Oui', noInv: 'Aucune facture.', noExp: 'Aucune dépense.', noOut: 'Aucune facture sortante.', noCli: 'Aucun solde ouvert.', noPay: 'Aucun versement.', category: 'Catégorie', vendor: 'Bénéficiaire', qty: 'Qté', price: 'Prix', discount: 'Remise', tax: 'Taxe', draftNo: "Un brouillon n'accepte pas de versement.", cur: 'Devise', invoicesN: 'factures', readonly: 'Lecture seule', materials: 'Matériaux', rent: 'Loyer', utilities: 'Charges', salaries: 'Salaires', maintenance: 'Maintenance', transport: 'Transport', marketing: 'Marketing' }
+  };
+  var A = APO_STAFF, c = A.ctx, t = c.t, esc = c.esc;
+  c.addStrings(S);
+  var CFG = window.APO_STAFF_CFG, tab = 'sum', q = '', flt = 'unpaid', ME = null, D = null;
+  var STC = { draft: '#6b7c93', issued: '#dc2626', partial: '#f59e0b', paid: '#16a34a' };
+
+  /* ---- المال: نفس منطق التطبيق (الكسور 2 / 3 للدينارات، تقليم الأصفار لعملات بلا كسور) ---- */
+  function dec(code) { return ['BHD', 'KWD', 'OMR', 'JOD', 'TND', 'LYD'].indexOf(code) >= 0 ? 3 : 2; }
+  function trim0(code) { return ['IQD', 'LBP', 'SYP', 'YER', 'SOS', 'DJF', 'KMF'].indexOf(code) >= 0; }
+  function money(v, code) {
+    var d = dec(code), s = Math.abs(v).toFixed(d);
+    if (trim0(code) && s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+    var p = s.split('.'); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    var sign = (v < 0 && /[1-9]/.test(s)) ? '-' : '';
+    return '<span class="num">' + sign + p[0] + (p[1] ? '.' + p[1] : '') + ' ' + esc(code) + '</span>';
+  }
+  function tol(code) { var x = 0.5, i; for (i = 0; i < dec(code || 'USD'); i++) x /= 10; return x; }
+  function totals(inv, itemsKey) {
+    var its = inv[itemsKey] || [], sub = 0;
+    its.forEach(function (i) { sub += (Number(i.qty) || 1) * (Number(i.unit_price) || 0); });
+    var taxable = Math.max(sub - (Number(inv.discount) || 0), 0), total = taxable + taxable * (Number(inv.tax_percent) || 0) / 100, paid = Number(inv.paid) || 0;
+    return { sub: sub, total: total, paid: paid, rem: total - paid };
+  }
+  function ymd(d) { return c.fmtDate(d); }
+  function monthKey(d) { return String(d || '').slice(0, 7); }
+  var NOWM = (function () { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); })();
+
+  CFG.identify = function (ctx) {
+    return ctx.get('technicians?select=*&user_id=eq.' + ctx.uid() + '&deleted_at=is.null&limit=1').then(function (rows) {
+      var r = rows && rows[0];
+      if (!r) return { error: 'notfound' };
+      if (r.kind !== 'accountant') return { error: 'wrongrole' };
+      if (r.active === false) return { error: 'suspended' };
+      ME = r; CFG._me = { id: r.id, name: r.full_name };
+      return ctx.get('labs?select=name,portal_name&limit=1').then(function (l) { if (l && l[0]) CFG._lab = l[0].portal_name || l[0].name; return null; }).catch(function () { return null; });
+    });
+  };
+
+  CFG.load = function (ctx) {
+    return Promise.all([
+      ctx.get('invoices?select=*,clients(name),invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=800'),
+      ctx.get('payments?select=*&order=paid_at.desc&limit=4000'),
+      ctx.get('expenses?select=*&deleted_at=is.null&order=spent_at.desc&limit=600'),
+      ctx.get('outgoing_invoices?select=*,external_labs(name),outgoing_invoice_items(*)&deleted_at=is.null&order=invoice_no.desc&limit=500')
+    ]).then(function (r) {
+      var payBy = {}; (r[1] || []).forEach(function (p) { (payBy[p.invoice_id] = payBy[p.invoice_id] || []).push(p); });
+      D = { inv: r[0] || [], pay: r[1] || [], payBy: payBy, exp: r[2] || [], out: r[3] || [] };
+      return D;
+    });
+  };
+
+  function stPill(s) { var k = s === 'paid' ? 'paidSt' : s; return '<span class="pill" style="background:' + (STC[s] || '#64748b') + '">' + esc(t(k)) + '</span>'; }
+  function isUnpaid(i) { return i.status === 'issued' || i.status === 'partial'; }
+
+  function byCur(list, fn) { var m = {}; list.forEach(function (x) { var cc = x.currency || 'USD'; m[cc] = (m[cc] || 0) + fn(x); }); return m; }
+  function curBlock(label, m, cls) {
+    var ks = Object.keys(m).filter(function (k) { return Math.abs(m[k]) > 0.0000001; });
+    return '<div class="stat"><div class="l">' + esc(label) + '</div>' + (ks.length ? ks.map(function (k) { return '<div class="big ' + (cls || '') + '">' + money(m[k], k) + '</div>'; }).join('') : '<div class="big">—</div>') + '</div>';
+  }
+
+  function summary(d) {
+    var live = d.inv.filter(function (i) { return i.status !== 'draft'; });
+    var unp = live.filter(function (i) { return isUnpaid(i) && totals(i, 'invoice_items').rem > tol(i.currency); });
+    var rem = byCur(unp, function (i) { return totals(i, 'invoice_items').rem; });
+    var inv = byCur(live, function (i) { return totals(i, 'invoice_items').total; });
+    var col = byCur(live, function (i) { return Number(i.paid) || 0; });
+    var invMap = {}; d.inv.forEach(function (i) { invMap[i.id] = i; });
+    var mp = {}; d.pay.forEach(function (p) { if (monthKey(p.paid_at) === NOWM) { var i = invMap[p.invoice_id]; var cc = (i && i.currency) || 'USD'; mp[cc] = (mp[cc] || 0) + (Number(p.amount) || 0); } });
+    var me = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) { var cc = e.currency || 'USD'; me[cc] = (me[cc] || 0) + (Number(e.amount) || 0); } });
+    var oun = d.out.filter(function (o) { return o.status !== 'draft'; });
+    var orem = byCur(oun, function (o) { var x = totals(o, 'outgoing_invoice_items').rem; return x > tol(o.currency) ? x : 0; });
+    return '<div class="grid" style="margin-top:12px">' + curBlock(t('remaining') + ' (' + unp.length + ' ' + t('invoicesN') + ')', rem, 'red') + curBlock(t('invoiced'), inv) + curBlock(t('collected'), col, 'grn') + curBlock(t('monthPaid'), mp, 'grn') + curBlock(t('monthExp'), me) + curBlock(t('payables'), orem, 'red') + '</div>';
+  }
+
+  function invCard(i, kind) {
+    var T = totals(i, kind === 'out' ? 'outgoing_invoice_items' : 'invoice_items');
+    var name = kind === 'out' ? (i.external_labs && i.external_labs.name) : (i.clients && i.clients.name);
+    return '<div class="card hv" data-' + (kind === 'out' ? 'out' : 'inv') + '="' + i.id + '" style="cursor:pointer"><div class="row"><div><span class="no ltr">#' + esc(i.invoice_no) + '</span> ' + esc(name || '') + '</div>' + stPill(i.status) + '</div>' +
+      '<div class="kv"><span>' + esc(t('total')) + ': ' + money(T.total, i.currency) + '</span><span>' + esc(t('paid')) + ': ' + money(T.paid, i.currency) + '</span><span>' + esc(t('remaining')) + ': <b class="' + (T.rem > tol(i.currency) ? 'red' : 'grn') + '">' + money(T.rem, i.currency) + '</b></span><span>' + esc(ymd(i.issued_at)) + '</span></div></div>';
+  }
+
+  function itemsHtml(i, key) {
+    var its = i[key] || [];
+    return its.length ? '<div class="card">' + its.map(function (x) { return '<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line)"><span>' + esc(x.description || '') + '</span><span class="sub num">' + esc(x.qty) + ' × ' + esc(x.unit_price) + '</span></div>'; }).join('') + '</div>' : '';
+  }
+
+  function openInvoice(id, kind) {
+    var i = (kind === 'out' ? D.out : D.inv).filter(function (x) { return x.id === id; })[0]; if (!i) return;
+    var key = kind === 'out' ? 'outgoing_invoice_items' : 'invoice_items', T = totals(i, key), pays = kind === 'out' ? [] : (D.payBy[id] || []);
+    var name = kind === 'out' ? (i.external_labs && i.external_labs.name) : (i.clients && i.clients.name);
+    var h = '<div class="row"><div><span class="no ltr">#' + esc(i.invoice_no) + '</span> ' + esc(name || '') + '</div>' + stPill(i.status) + '</div>' +
+      '<div class="kv"><span>' + esc(t('date')) + ': <b>' + esc(ymd(i.issued_at)) + '</b></span><span>' + esc(t('cur')) + ': <b>' + esc(i.currency) + '</b></span>' + (Number(i.discount) ? '<span>' + esc(t('discount')) + ': <b class="num">' + esc(i.discount) + '</b></span>' : '') + (Number(i.tax_percent) ? '<span>' + esc(t('tax')) + ': <b class="num">' + esc(i.tax_percent) + '%</b></span>' : '') + '</div>' +
+      '<h2>' + esc(t('items')) + '</h2>' + itemsHtml(i, key) +
+      '<div class="grid"><div class="stat"><div class="l">' + esc(t('total')) + '</div><div class="big">' + money(T.total, i.currency) + '</div></div><div class="stat"><div class="l">' + esc(t('paid')) + '</div><div class="big grn">' + money(T.paid, i.currency) + '</div></div><div class="stat"><div class="l">' + esc(t('remaining')) + '</div><div class="big ' + (T.rem > tol(i.currency) ? 'red' : 'grn') + '">' + money(T.rem, i.currency) + '</div></div></div>';
+    if (kind !== 'out') {
+      h += '<h2>' + esc(t('payments')) + '</h2>' + (pays.length ? pays.map(function (p) { return '<div class="card"><div class="row"><b>' + money(Number(p.amount) || 0, i.currency) + '</b><span class="who ltr">' + esc(ymd(p.paid_at)) + '</span></div><div class="sub">' + esc(t(p.method) === p.method ? p.method : t(p.method)) + (p.note ? ' — ' + esc(p.note) : '') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noPay')) + '</div>');
+      h += '<div class="acts">' + (i.status === 'draft' ? '<span class="sub">' + esc(t('draftNo')) + '</span>' : '<button class="btn" id="ap">＋ ' + esc(t('addPay')) + '</button>') + '<button class="btn alt" id="cl">' + esc(t('close')) + '</button></div>';
+    } else h += '<div class="sub" style="margin-top:8px">' + esc(t('readonly')) + '</div><button class="btn alt block" id="cl">' + esc(t('close')) + '</button>';
+    c.modal(h, function (m) {
+      m.querySelector('#cl').onclick = function () { m.remove(); };
+      var ap = m.querySelector('#ap'); if (ap) ap.onclick = function () { m.remove(); payForm(i, T); };
+    });
+  }
+
+  function payForm(i, T) {
+    var methods = ['cash', 'transfer', 'card', 'other'];
+    c.modal('<h3 style="margin:0 0 6px">' + esc(t('addPay')) + ' — #' + esc(i.invoice_no) + '</h3><div class="sub">' + esc(t('remaining')) + ': ' + money(Math.max(T.rem, 0), i.currency) + '</div>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('amount')) + ' (' + esc(i.currency) + ')</label><input id="am" inputmode="decimal" class="ltr" placeholder="0">' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('method')) + '</label><select id="me">' + methods.map(function (k) { return '<option value="' + k + '">' + esc(t(k)) + '</option>'; }).join('') + '</select>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('note')) + '</label><input id="nt">' +
+      '<div class="acts"><button class="btn ok" id="ok">' + esc(t('savePay')) + '</button><button class="btn alt" id="no">' + esc(t('cancel')) + '</button></div>', function (m) {
+      m.querySelector('#no').onclick = function () { m.remove(); };
+      m.querySelector('#ok').onclick = function () {
+        var raw = m.querySelector('#am').value.trim().replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(',', '.');
+        var v = parseFloat(raw);
+        if (!(v > 0) || !isFinite(v)) { c.toast(t('badAmount'), true); return; }
+        if (v > T.rem + tol(i.currency) && !window.confirm(t('over'))) return;
+        var btn = m.querySelector('#ok'); btn.disabled = true;
+        var meth = m.querySelector('#me').value, note = m.querySelector('#nt').value.trim();
+        c.post('payments', { invoice_id: i.id, amount: v, method: meth, note: note || null })
+          .then(function () { c.logActivity('payment_add', i.id, '#' + i.invoice_no + ' ' + v + ' ' + i.currency, null, 'invoice'); m.remove(); c.toast(t('payOk')); refresh(); })
+          .catch(function (e) { btn.disabled = false; if (e && e.message === 'session') return; c.toast(e && e.message || String(e), true); });
+      };
+    });
+  }
+  var refresh = function () { var b = document.getElementById('rf'); if (b) b.click(); };
+
+  function expLabel(k) { var v = t(k); return v === k ? k : v; }
+
+  CFG.render = function (ctx, d, body, reload) {
+    var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
+    var unpN = d.inv.filter(function (i) { return isUnpaid(i); }).length;
+    h += '<div class="tabs">' + [['sum', 'tSum', ''], ['inv', 'tInv', d.inv.length], ['cli', 'tCli', ''], ['exp', 'tExp', d.exp.length], ['out', 'tOut', d.out.length]].map(function (x) {
+      return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + (x[2] !== '' ? '<span class="badge">' + x[2] + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
+    var ql = q.trim().toLowerCase();
+    if (tab === 'sum') h += summary(d);
+    else if (tab === 'inv') {
+      var list = d.inv.filter(function (i) { return (flt === 'all' || (flt === 'unpaid' ? isUnpaid(i) : i.status === flt)) && (!ql || ('#' + i.invoice_no + ' ' + ((i.clients && i.clients.name) || '')).toLowerCase().indexOf(ql) >= 0); });
+      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div><div class="tabs">' + [['unpaid', t('unpaid') + ' (' + unpN + ')'], ['all', t('all')], ['paid', t('paidSt')], ['draft', t('draft')]].map(function (x) { return '<button data-flt="' + x[0] + '" class="' + (flt === x[0] ? 'on' : '') + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
+      h += list.length ? list.slice(0, 200).map(function (i) { return invCard(i, 'in'); }).join('') : '<div class="empty">' + esc(t('noInv')) + '</div>';
+    } else if (tab === 'cli') {
+      var g = {};
+      d.inv.forEach(function (i) { if (!isUnpaid(i)) return; var T = totals(i, 'invoice_items'); if (T.rem <= tol(i.currency)) return; var nm = (i.clients && i.clients.name) || '—'; g[nm] = g[nm] || { n: 0, m: {} }; g[nm].n++; g[nm].m[i.currency] = (g[nm].m[i.currency] || 0) + T.rem; });
+      var names = Object.keys(g).sort();
+      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
+      names = names.filter(function (n) { return !ql || n.toLowerCase().indexOf(ql) >= 0; });
+      h += names.length ? names.map(function (n) { return '<div class="card"><div class="row"><b>' + esc(n) + '</b><span class="sub">' + g[n].n + ' ' + esc(t('invoicesN')) + '</span></div><div class="kv">' + Object.keys(g[n].m).map(function (k) { return '<span class="red big" style="font-size:16px">' + money(g[n].m[k], k) + '</span>'; }).join('') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noCli')) + '</div>';
+    } else if (tab === 'exp') {
+      var tot = {}; d.exp.forEach(function (e) { if (monthKey(e.spent_at) === NOWM) tot[e.currency || 'USD'] = (tot[e.currency || 'USD'] || 0) + (Number(e.amount) || 0); });
+      h += '<div class="grid" style="margin-top:10px">' + curBlock(t('monthExp'), tot) + '</div>';
+      h += d.exp.length ? d.exp.slice(0, 200).map(function (e) { return '<div class="card"><div class="row"><b>' + esc(e.title || '') + '</b><span class="red num">' + money(Number(e.amount) || 0, e.currency || 'USD') + '</span></div><div class="kv"><span>' + esc(expLabel(e.category || 'other')) + '</span>' + (e.vendor ? '<span>' + esc(t('vendor')) + ': <b>' + esc(e.vendor) + '</b></span>' : '') + '<span>' + esc(ymd(e.spent_at)) + '</span></div>' + (e.note ? '<div class="sub">📝 ' + esc(e.note) + '</div>' : '') + '</div>'; }).join('') : '<div class="empty">' + esc(t('noExp')) + '</div>';
+    } else {
+      h += d.out.length ? d.out.slice(0, 200).map(function (o) { return invCard(o, 'out'); }).join('') : '<div class="empty">' + esc(t('noOut')) + '</div>';
+    }
+    body.innerHTML = h;
+    body.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); CFG.render(ctx, d, body, reload); }; });
+    body.querySelectorAll('[data-flt]').forEach(function (b) { b.onclick = function () { flt = b.getAttribute('data-flt'); CFG.render(ctx, d, body, reload); }; });
+    var qi = body.querySelector('#q'); if (qi) { qi.oninput = function () { q = qi.value; var pos = qi.selectionStart; CFG.render(ctx, d, body, reload); var n = body.querySelector('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; }
+    body.querySelectorAll('[data-inv]').forEach(function (el) { el.onclick = function () { openInvoice(el.getAttribute('data-inv'), 'in'); }; });
+    body.querySelectorAll('[data-out]').forEach(function (el) { el.onclick = function () { openInvoice(el.getAttribute('data-out'), 'out'); }; });
+  };
+
+  CFG.codeLen = 18;
+  CFG.icon = '📒';
+  CFG.title = { ar: 'بوابة المحاسب', en: 'Accountant Ledger', fr: 'Poste du comptable' };
+  A.start();
+})();
+</script>
+</body>
+</html>
