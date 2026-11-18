@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#ea580c">
+<title>APO Technician Workbench</title>
+<link rel="stylesheet" href="staff_core.css">
+<style>:root{--accent:#ea580c;--accent2:#f59e0b;--glow:rgba(234,88,12,.35)}</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.APO_STAFF_CFG = { role: "technician" };</script>
+<script src="staff_core.js"></script>
+<script>
+/* بوابة الفني — برتقالية. تعمل بنفس حساب الفني وكوده وصلاحياته (RLS) كما في البرنامج. */
+(function () {
+  var S = {
+    ar: { tMine: 'عملي الآن', tAvail: 'متاحة لي', tAll: 'كل الحالات', tDone: 'أنجزتها', stages: 'المراحل', start: 'ابدأ', finish: 'تمت', toTrial: 'أرسل للتجربة', fromTrial: 'عادت من التجربة', editNote: 'ملاحظة', otherTech: 'مسؤول عنها', noMine: 'لا مراحل قيد العمل عندك الآن.', noAvail: 'لا مراحل متاحة للبدء.', noCases: 'لا حالات.', noDone: 'لا مراحل منجزة بعد.', trialNote: 'ملاحظات التجربة (اختياري)', stageNote: 'ملاحظة المرحلة', busy: 'هناك مرحلة جارية في هذه الحالة. أنهِها أولاً.', locked: 'المرحلة مقفلة بعد «تمت».', ok_start: 'بدأت المرحلة', ok_done: 'أُنجزت المرحلة', ok_trial: 'أُرسلت للتجربة', ok_ret: 'سُجّلت العودة من التجربة', ok_note: 'حُفظت الملاحظة', nostage: 'لا مراحل لهذه الحالة بعد (يضيفها المدير).', details: 'تفاصيل', mineTag: 'مرحلتي', close: 'إغلاق', hello: 'أهلاً', finishedAt: 'أُنجزت' },
+    en: { tMine: 'My work', tAvail: 'Available', tAll: 'All cases', tDone: 'Done by me', stages: 'Stages', start: 'Start', finish: 'Done', toTrial: 'Send to trial', fromTrial: 'Returned from trial', editNote: 'Note', otherTech: 'Assigned to', noMine: 'You have no stage in progress.', noAvail: 'No stage available to start.', noCases: 'No cases.', noDone: 'No finished stages yet.', trialNote: 'Trial notes (optional)', stageNote: 'Stage note', busy: 'Another stage of this case is in progress. Finish it first.', locked: 'The stage is locked after “Done”.', ok_start: 'Stage started', ok_done: 'Stage completed', ok_trial: 'Sent to trial', ok_ret: 'Return from trial recorded', ok_note: 'Note saved', nostage: 'No stages for this case yet (the manager adds them).', details: 'Details', mineTag: 'My stage', close: 'Close', hello: 'Hello', finishedAt: 'Finished' },
+    fr: { tMine: 'Mon travail', tAvail: 'Disponibles', tAll: 'Tous les cas', tDone: 'Terminées', stages: 'Étapes', start: 'Démarrer', finish: 'Terminée', toTrial: "Envoyer à l'essayage", fromTrial: "Retour d'essayage", editNote: 'Note', otherTech: 'Assignée à', noMine: "Aucune étape en cours chez vous.", noAvail: 'Aucune étape à démarrer.', noCases: 'Aucun cas.', noDone: 'Aucune étape terminée.', trialNote: "Notes d'essayage (facultatif)", stageNote: "Note de l'étape", busy: "Une autre étape de ce cas est en cours. Terminez-la d'abord.", locked: "L'étape est verrouillée après « Terminée ».", ok_start: 'Étape démarrée', ok_done: 'Étape terminée', ok_trial: "Envoyée à l'essayage", ok_ret: "Retour d'essayage enregistré", ok_note: 'Note enregistrée', nostage: "Pas encore d'étapes pour ce cas (le gérant les ajoute).", details: 'Détails', mineTag: 'Mon étape', close: 'Fermer', hello: 'Bonjour', finishedAt: 'Terminée' }
+  };
+  var A = APO_STAFF, c = A.ctx, t = c.t, esc = c.esc, pill = c.pill;
+  c.addStrings(S);
+  var tab = 'mine', q = '', ME = null;
+
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function nowIso() { return new Date().toISOString(); }
+
+  var CFG = window.APO_STAFF_CFG;
+
+  /* حالة العمل المشتقة من المراحل — مطابقة لمنطق التطبيق (workflow_sync_core) */
+  function statusForStageName(name) {
+    var n = String(name || '').toLowerCase(), i;
+    var design = ['تصميم', 'design', 'conception', 'cad', 'سكان', 'scan'];
+    var finish = ['تشطيب', 'لمسات', 'تلميع', 'تزجيج', 'finish', 'finition', 'polish', 'glaz', 'glaçage'];
+    for (i = 0; i < design.length; i++) if (n.indexOf(design[i]) >= 0) return 'design';
+    for (i = 0; i < finish.length; i++) if (n.indexOf(finish[i]) >= 0) return 'finishing';
+    return 'milling';
+  }
+  function deriveStatus(cur, stages) {
+    if (cur === 'delivered' || cur === 'cancelled') return null;
+    var next = null, w;
+    if (stages.some(function (s) { return s.status === 'trial'; })) next = 'trial';
+    else {
+      w = stages.filter(function (s) { return s.status === 'working'; });
+      if (w.length) next = statusForStageName(w[0].name);
+      else if (stages.length && stages.every(function (s) { return s.status === 'done'; })) next = 'ready';
+      else if (stages.length && (cur === 'trial' || cur === 'ready')) next = 'milling';
+    }
+    return (!next || next === cur) ? null : next;
+  }
+
+  var DATA = null;
+
+  CFG.identify = function (ctx) {
+    return ctx.get('technicians?select=*&user_id=eq.' + ctx.uid() + '&deleted_at=is.null&limit=1').then(function (rows) {
+      var r = rows && rows[0];
+      if (!r) return { error: 'notfound' };
+      if ((r.kind || 'technician') !== 'technician') return { error: 'wrongrole' };
+      if (r.active === false) return { error: 'suspended' };
+      ME = r; CFG._me = { id: r.id, name: r.full_name };
+      return ctx.get('labs?select=name,portal_name&limit=1').then(function (l) { if (l && l[0]) CFG._lab = l[0].portal_name || l[0].name; return null; }).catch(function () { return null; });
+    });
+  };
+
+  CFG.load = function (ctx) {
+    return Promise.all([
+      ctx.get('cases?select=id,case_no,patient_name,work_type,status,due_date,received_at,material,shade,teeth,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
+      ctx.get('case_stages?select=*&deleted_at=is.null&order=seq.asc&limit=6000'),
+      ctx.get('case_trials?select=*&deleted_at=is.null&returned_at=is.null&limit=2000')
+    ]).then(function (r) {
+      var cases = r[0] || [], byCase = {}, openCaseIds = {};
+      cases.forEach(function (cs) { openCaseIds[cs.id] = 1; });
+      (r[1] || []).forEach(function (s) { (byCase[s.case_id] = byCase[s.case_id] || []).push(s); });
+      var trials = {};
+      (r[2] || []).forEach(function (tr) { if (tr.stage_id) trials[tr.stage_id] = tr; });
+      var done = [];
+      (r[1] || []).forEach(function (s) { if (s.status === 'done' && s.technician_id === ME.id) done.push(s); });
+      DATA = { cases: cases, byCase: byCase, trials: trials, done: done, openCaseIds: openCaseIds };
+      return DATA;
+    });
+  };
+
+  function caseOf(id) { return DATA.cases.filter(function (x) { return x.id === id; })[0]; }
+  function mineStage(s) { return !s.technician_id || s.technician_id === ME.id; }
+  function stageName(s) { return esc(s.name); }
+
+  function chipsHtml(stages) {
+    return '<div class="chips">' + stages.map(function (s) {
+      return '<span class="chip ' + esc(s.status) + (s.technician_id === ME.id ? ' mine' : '') + '">' + esc(s.name) + ' · ' + esc(t('st_' + s.status)) + (s.technician_name && s.technician_id !== ME.id ? ' (' + esc(s.technician_name) + ')' : '') + '</span>';
+    }).join('') + '</div>';
+  }
+  function caseHead(cs) {
+    return '<div class="row"><div><span class="no ltr">#' + esc(cs.case_no) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
+      '<div class="kv"><span>' + esc(t(cs.work_type) === cs.work_type ? cs.work_type : t(cs.work_type)) + '</span>' + (cs.due_date ? '<span>' + esc(t('due')) + ': <b>' + esc(c.fmtDate(cs.due_date)) + '</b></span>' : '') + '</div>';
+  }
+
+  /* ---------- الإجراءات (نفس منطق التطبيق) ---------- */
+  function stagesOf(caseId) { return DATA.byCase[caseId] || []; }
+  function guard(s) {
+    if (s.status === 'done') throw new Error(t('locked'));
+    if (s.technician_id && s.technician_id !== ME.id) throw new Error(t('otherTech') + ': ' + (s.technician_name || ''));
+  }
+  function syncStatus(caseId) {
+    return c.get('case_stages?select=name,status&case_id=eq.' + caseId + '&deleted_at=is.null&order=seq.asc').then(function (sts) {
+      return c.get('cases?select=status&id=eq.' + caseId + '&limit=1').then(function (r) {
+        var cur = (r && r[0] && r[0].status) || 'received';
+        var next = deriveStatus(cur, sts || []);
+        if (!next) return;
+        return c.rpc('case_set_status_auto', { p_case_id: caseId, p_status: next });
+      });
+    }).catch(function () {});
+  }
+  function act(fn, okKey, again) {
+    return Promise.resolve().then(fn).then(function () { c.toast(t(okKey)); }).catch(function (e) { if (e && e.message === 'session') return; c.toast(e && e.message || String(e), true); }).then(again);
+  }
+  function doStart(s) {
+    return act(function () {
+      guard(s);
+      var other = stagesOf(s.case_id).filter(function (o) { return o.id !== s.id && (o.status === 'working' || o.status === 'trial'); });
+      if (other.length) throw new Error(t('busy') + ' (' + other[0].name + ')');
+      return c.patch('case_stages?id=eq.' + s.id, { status: 'working', technician_id: ME.id, technician_name: ME.full_name, started_at: nowIso(), stage_date: today() })
+        .then(function () { c.logActivity('stage_start', s.case_id, s.name + ' — ' + ME.full_name); return syncStatus(s.case_id); });
+    }, 'ok_start', refresh);
+  }
+  function doDone(s) {
+    return act(function () {
+      guard(s);
+      if (s.status === 'trial') throw new Error(t('fromTrial'));
+      if (s.status !== 'working') throw new Error(t('start'));
+      return c.patch('case_stages?id=eq.' + s.id, { status: 'done', finished_at: nowIso() })
+        .then(function () { c.logActivity('stage_done', s.case_id, s.name); return syncStatus(s.case_id); });
+    }, 'ok_done', refresh);
+  }
+  function askNote(title, ph, cb, initial) {
+    c.modal('<h3 style="margin:0 0 8px">' + esc(title) + '</h3><textarea id="nt" placeholder="' + esc(ph) + '">' + esc(initial || '') + '</textarea><div class="acts"><button class="btn" id="nok">' + esc(t('save')) + '</button><button class="btn alt" id="nno">' + esc(t('cancel')) + '</button></div>', function (m) {
+      m.querySelector('#nno').onclick = function () { m.remove(); };
+      m.querySelector('#nok').onclick = function () { var v = m.querySelector('#nt').value.trim(); m.remove(); cb(v); };
+    });
+  }
+  function doTrial(s) {
+    askNote(t('toTrial'), t('trialNote'), function (note) {
+      act(function () {
+        guard(s);
+        if (s.status !== 'working') throw new Error(t('start'));
+        return c.post('case_trials', { case_id: s.case_id, stage_id: s.id, sent_at: nowIso(), notes: note || null })
+          .then(function () { return c.patch('case_stages?id=eq.' + s.id, { status: 'trial' }); })
+          .then(function () { c.logActivity('trial_send', s.case_id, s.name); return syncStatus(s.case_id); });
+      }, 'ok_trial', refresh);
+    });
+  }
+  function doReturn(s) {
+    askNote(t('fromTrial'), t('trialNote'), function (note) {
+      act(function () {
+        guard(s);
+        var tr = DATA.trials[s.id];
+        var p = Promise.resolve();
+        if (tr) {
+          var v = { returned_at: nowIso() };
+          if (note) v.notes = (tr.notes ? tr.notes + '\n' : '') + note;
+          p = c.patch('case_trials?id=eq.' + tr.id, v);
+        }
+        return p.then(function () { return c.patch('case_stages?id=eq.' + s.id, { status: 'working' }); })
+          .then(function () { c.logActivity('trial_return', s.case_id, s.name); return syncStatus(s.case_id); });
+      }, 'ok_ret', refresh);
+    });
+  }
+  function doNote(s) {
+    askNote(t('stageNote'), t('stageNote'), function (note) {
+      act(function () { guard(s); return c.patch('case_stages?id=eq.' + s.id, { notes: note || null }).then(function () { c.logActivity('stage_update', s.case_id, s.name); }); }, 'ok_note', refresh);
+    }, s.notes || '');
+  }
+  var refresh = function () { var b = document.getElementById('rf'); if (b) b.click(); };
+
+  function stageActions(s) {
+    var h = '';
+    if (s.status === 'pending') h += '<button class="btn sm" data-a="start" data-s="' + s.id + '">▶ ' + esc(t('start')) + '</button>';
+    if (s.status === 'working') h += '<button class="btn sm ok" data-a="done" data-s="' + s.id + '">✔ ' + esc(t('finish')) + '</button><button class="btn sm alt" data-a="trial" data-s="' + s.id + '">⇄ ' + esc(t('toTrial')) + '</button>';
+    if (s.status === 'trial') h += '<button class="btn sm" data-a="ret" data-s="' + s.id + '">↩ ' + esc(t('fromTrial')) + '</button>';
+    if (s.status !== 'done') h += '<button class="btn sm alt" data-a="note" data-s="' + s.id + '">✎ ' + esc(t('editNote')) + '</button>';
+    return h ? '<div class="acts">' + h + '</div>' : '';
+  }
+  function stageCard(s, withCase) {
+    var cs = caseOf(s.case_id);
+    var h = '<div class="card hv">';
+    if (cs && withCase) h += caseHead(cs);
+    h += '<div class="kv" style="margin-top:8px"><span>' + esc(t('stages')) + ': <b>' + stageName(s) + '</b></span><span>' + esc(t('st_' + s.status)) + '</span>' + (s.technician_name && s.technician_id !== ME.id ? '<span>' + esc(t('otherTech')) + ': <b>' + esc(s.technician_name) + '</b></span>' : '') + '</div>';
+    if (s.notes) h += '<div class="sub" style="margin-top:6px">📝 ' + esc(s.notes) + '</div>';
+    if (DATA.trials[s.id] && DATA.trials[s.id].notes) h += '<div class="sub">⇄ ' + esc(DATA.trials[s.id].notes) + '</div>';
+    if (!s.technician_id || s.technician_id === ME.id) h += stageActions(s);
+    return h + '</div>';
+  }
+
+  function openDetail(id) {
+    var cs = caseOf(id); if (!cs) return;
+    var ss = stagesOf(id);
+    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
+      (ss.length ? chipsHtml(ss) : '<div class="empty">' + esc(t('nostage')) + '</div>');
+    ss.forEach(function (s) { if (!s.technician_id || s.technician_id === ME.id) { h += stageCard(s, false); } });
+    h += '<button class="btn alt block" id="cl">' + esc(t('close')) + '</button>';
+    c.modal(h, function (m) {
+      m.querySelector('#cl').onclick = function () { m.remove(); };
+      bindActs(m, function () { m.remove(); });
+    });
+  }
+  function bindActs(scope, after) {
+    scope.querySelectorAll('[data-a]').forEach(function (b) {
+      b.onclick = function () {
+        var sid = b.getAttribute('data-s'), s = null, k;
+        for (k in DATA.byCase) { (DATA.byCase[k] || []).forEach(function (x) { if (x.id === sid) s = x; }); }
+        if (!s) return;
+        var a = b.getAttribute('data-a'); if (after) after();
+        if (a === 'start') doStart(s); else if (a === 'done') doDone(s); else if (a === 'trial') doTrial(s); else if (a === 'ret') doReturn(s); else if (a === 'note') doNote(s);
+      };
+    });
+  }
+
+  CFG.render = function (ctx, d, body, reload) {
+    var mine = [], avail = [];
+    d.cases.forEach(function (cs) {
+      var ss = d.byCase[cs.id] || [];
+      var active = ss.filter(function (s) { return s.status === 'working' || s.status === 'trial'; });
+      active.forEach(function (s) { if (s.technician_id === ME.id) mine.push(s); });
+      if (!active.length) { var first = ss.filter(function (s) { return s.status === 'pending'; })[0]; if (first && mineStage(first)) avail.push(first); }
+    });
+    var ql = q.trim().toLowerCase();
+    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
+    var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
+    h += '<div class="tabs">' + [['mine', 'tMine', mine.length], ['avail', 'tAvail', avail.length], ['all', 'tAll', d.cases.length], ['done', 'tDone', d.done.length]].map(function (x) {
+      return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + '<span class="badge">' + x[2] + '</span></button>';
+    }).join('') + '</div>';
+    if (tab === 'mine') h += mine.length ? mine.map(function (s) { return stageCard(s, true); }).join('') : '<div class="empty">' + esc(t('noMine')) + '</div>';
+    else if (tab === 'avail') h += avail.length ? avail.map(function (s) { return stageCard(s, true); }).join('') : '<div class="empty">' + esc(t('noAvail')) + '</div>';
+    else if (tab === 'done') h += d.done.length ? d.done.slice().sort(function (a, b) { return String(b.finished_at || '').localeCompare(String(a.finished_at || '')); }).slice(0, 80).map(function (s) { var cs = caseOf(s.case_id); return '<div class="card"><b class="ltr">' + (cs ? '#' + esc(cs.case_no) : '') + '</b> ' + esc(cs ? cs.patient_name || '' : '') + '<div class="kv"><span>' + esc(s.name) + '</span><span>' + esc(t('finishedAt')) + ': ' + esc(c.fmtDate(s.finished_at)) + '</span></div></div>'; }).join('') : '<div class="empty">' + esc(t('noDone')) + '</div>';
+    else {
+      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
+      h += cases.length ? cases.map(function (cs) { return '<div class="card hv" data-case="' + cs.id + '" style="cursor:pointer">' + caseHead(cs) + chipsHtml(d.byCase[cs.id] || []) + '</div>'; }).join('') : '<div class="empty">' + esc(t('noCases')) + '</div>';
+    }
+    body.innerHTML = h;
+    body.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); CFG.render(ctx, d, body, reload); }; });
+    var qi = body.querySelector('#q'); if (qi) { qi.oninput = function () { q = qi.value; var pos = qi.selectionStart; CFG.render(ctx, d, body, reload); var n = body.querySelector('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; }
+    body.querySelectorAll('[data-case]').forEach(function (el) { el.onclick = function () { openDetail(el.getAttribute('data-case')); }; });
+    bindActs(body, null);
+  };
+
+  CFG.role = 'technician';
+  CFG.codeLen = 16;
+  CFG.icon = '🛠️';
+  CFG.title = { ar: 'بوابة الفني', en: 'Technician Workbench', fr: 'Poste du prothésiste' };
+  A.start();
+})();
+</script>
+</body>
+</html>
