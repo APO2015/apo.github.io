@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#db2777">
+<title>APO Quality Desk</title>
+<link rel="stylesheet" href="staff_core.css">
+<style>:root{--accent:#db2777;--accent2:#f472b6;--glow:rgba(219,39,119,.38)}</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.APO_STAFF_CFG = { role: "checker" };</script>
+<script src="staff_core.js"></script>
+<script>
+/* بوابة المراقب — وردية. نفس حساب المراقب وكوده وصلاحياته (RLS) كما في البرنامج.
+   قراءة: الحالات والمراحل والملاحظات. كتابة: إضافة ملاحظة جودة فقط (كما في البرنامج؛ التعديل والحذف للمدير). */
+(function () {
+  var S = {
+    ar: { tReview: 'بانتظار مراجعتي', tLive: 'العمل الجاري', tAll: 'كل الحالات', tNotes: 'الملاحظات', v_ok: 'مطابقة', v_rework: 'تحتاج تعديلاً', v_rejected: 'مرفوضة', addReview: 'ملاحظة جودة', wholeCase: 'الحالة كلها', stage: 'المرحلة', verdict: 'النتيجة', recs: 'توصيات', saveReview: 'حفظ الملاحظة', savedReview: 'حُفظت الملاحظة', noReview: 'لا حالات بانتظار مراجعتك.', noLive: 'لا مراحل جارية الآن.', noNotes: 'لا ملاحظات بعد.', noCases: 'لا حالات.', stages: 'المراحل', reviews: 'ملاحظات الجودة', noStages: 'لا مراحل بعد.', by: 'بواسطة', details: 'تفاصيل', close: 'إغلاق', hello: 'أهلاً', lastRev: 'آخر ملاحظة', never: 'لا ملاحظات', tech: 'الفني', needNote: 'اكتب ملاحظة أو توصية.', since: 'منذ', st_working: 'قيد العمل' },
+    en: { tReview: 'Awaiting review', tLive: 'In progress', tAll: 'All cases', tNotes: 'Reviews', v_ok: 'Conforming', v_rework: 'Needs rework', v_rejected: 'Rejected', addReview: 'Quality review', wholeCase: 'Whole case', stage: 'Stage', verdict: 'Verdict', recs: 'Recommendations', saveReview: 'Save review', savedReview: 'Review saved', noReview: 'No cases awaiting your review.', noLive: 'No stage in progress now.', noNotes: 'No reviews yet.', noCases: 'No cases.', stages: 'Stages', reviews: 'Quality reviews', noStages: 'No stages yet.', by: 'By', details: 'Details', close: 'Close', hello: 'Hello', lastRev: 'Last review', never: 'No reviews', tech: 'Technician', needNote: 'Write a note or recommendation.', since: 'since', st_working: 'In progress' },
+    fr: { tReview: 'À contrôler', tLive: 'En cours', tAll: 'Tous les cas', tNotes: 'Contrôles', v_ok: 'Conforme', v_rework: 'À retoucher', v_rejected: 'Refusée', addReview: 'Contrôle qualité', wholeCase: 'Tout le cas', stage: 'Étape', verdict: 'Résultat', recs: 'Recommandations', saveReview: 'Enregistrer', savedReview: 'Contrôle enregistré', noReview: 'Aucun cas à contrôler.', noLive: 'Aucune étape en cours.', noNotes: 'Aucun contrôle.', noCases: 'Aucun cas.', stages: 'Étapes', reviews: 'Contrôles qualité', noStages: "Pas encore d'étapes.", by: 'Par', details: 'Détails', close: 'Fermer', hello: 'Bonjour', lastRev: 'Dernier contrôle', never: 'Aucun contrôle', tech: 'Prothésiste', needNote: 'Saisissez une note ou une recommandation.', since: 'depuis', st_working: 'En cours' }
+  };
+  var A = APO_STAFF, c = A.ctx, t = c.t, esc = c.esc, pill = c.pill;
+  c.addStrings(S);
+  var CFG = window.APO_STAFF_CFG, tab = 'review', q = '', ME = null, D = null;
+  var VCOL = { ok: '#16a34a', rework: '#f59e0b', rejected: '#dc2626' };
+
+  CFG.identify = function (ctx) {
+    return ctx.get('technicians?select=*&user_id=eq.' + ctx.uid() + '&deleted_at=is.null&limit=1').then(function (rows) {
+      var r = rows && rows[0];
+      if (!r) return { error: 'notfound' };
+      if (r.kind !== 'checker') return { error: 'wrongrole' };
+      if (r.active === false) return { error: 'suspended' };
+      ME = r; CFG._me = { id: r.id, name: r.full_name };
+      return ctx.get('labs?select=name,portal_name&limit=1').then(function (l) { if (l && l[0]) CFG._lab = l[0].portal_name || l[0].name; return null; }).catch(function () { return null; });
+    });
+  };
+
+  CFG.load = function (ctx) {
+    return Promise.all([
+      ctx.get('cases?select=id,case_no,patient_name,work_type,status,due_date,received_at,material,shade,teeth,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
+      ctx.get('case_stages?select=*&deleted_at=is.null&order=seq.asc&limit=6000'),
+      ctx.get('case_reviews?select=*&deleted_at=is.null&order=created_at.desc&limit=1500')
+    ]).then(function (r) {
+      var byCase = {}, revBy = {};
+      (r[1] || []).forEach(function (s) { (byCase[s.case_id] = byCase[s.case_id] || []).push(s); });
+      (r[2] || []).forEach(function (v) { (revBy[v.case_id] = revBy[v.case_id] || []).push(v); });
+      D = { cases: r[0] || [], byCase: byCase, revBy: revBy, reviews: r[2] || [] };
+      return D;
+    });
+  };
+
+  function caseOf(id) { return D.cases.filter(function (x) { return x.id === id; })[0]; }
+  function vpill(v) { return '<span class="pill" style="background:' + (VCOL[v] || '#64748b') + '">' + esc(t('v_' + v)) + '</span>'; }
+  function caseHead(cs) {
+    return '<div class="row"><div><span class="no ltr">#' + esc(cs.case_no) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
+      '<div class="kv"><span>' + esc(t(cs.work_type) === cs.work_type ? cs.work_type : t(cs.work_type)) + '</span>' + (cs.due_date ? '<span>' + esc(t('due')) + ': <b>' + esc(c.fmtDate(cs.due_date)) + '</b></span>' : '') + '</div>';
+  }
+  function chipsHtml(stages) {
+    return '<div class="chips">' + stages.map(function (s) { return '<span class="chip ' + esc(s.status) + '">' + esc(s.name) + ' · ' + esc(t('st_' + s.status)) + (s.technician_name ? ' (' + esc(s.technician_name) + ')' : '') + '</span>'; }).join('') + '</div>';
+  }
+  function reviewHtml(v) {
+    return '<div class="card"><div class="row"><div>' + vpill(v.verdict) + (v.stage_name ? ' <span class="sub">' + esc(v.stage_name) + '</span>' : '') + '</div><span class="who ltr">' + esc(c.fmtDate(v.created_at)) + '</span></div>' +
+      (v.notes ? '<div style="margin-top:6px">📝 ' + esc(v.notes) + '</div>' : '') + (v.recommendations ? '<div class="sub" style="margin-top:4px">💡 ' + esc(v.recommendations) + '</div>' : '') +
+      (v.author_name ? '<div class="who" style="margin-top:4px">' + esc(t('by')) + ': ' + esc(v.author_name) + '</div>' : '') + '</div>';
+  }
+
+  /* الحالة بانتظار المراجعة: فيها مرحلة منجزة/في التجربة ولا ملاحظة أحدث من آخر حركة */
+  function lastMove(ss) { var m = ''; ss.forEach(function (s) { if (s.status === 'done' || s.status === 'trial') { var d = s.finished_at || s.updated_at || s.started_at || ''; if (d > m) m = d; } }); return m; }
+  function needsReview(cs) {
+    var ss = D.byCase[cs.id] || []; var mv = lastMove(ss);
+    if (!ss.some(function (s) { return s.status === 'done' || s.status === 'trial'; })) return false;
+    var rv = D.revBy[cs.id] || []; if (!rv.length) return true;
+    return String(rv[0].created_at || '') < mv;
+  }
+
+  function openReviewForm(caseId, done) {
+    var ss = D.byCase[caseId] || [], verdict = 'ok';
+    var opts = '<option value="">' + esc(t('wholeCase')) + '</option>' + ss.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+    var vb = ['ok', 'rework', 'rejected'].map(function (v) { return '<button class="btn sm alt" data-v="' + v + '" style="border-color:' + VCOL[v] + ';color:' + VCOL[v] + '">' + esc(t('v_' + v)) + '</button>'; }).join(' ');
+    c.modal('<h3 style="margin:0 0 8px">' + esc(t('addReview')) + '</h3><label class="sub">' + esc(t('stage')) + '</label><select id="rs">' + opts + '</select>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('verdict')) + '</label><div class="acts" id="vb">' + vb + '</div>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('notes')) + '</label><textarea id="rn"></textarea>' +
+      '<label class="sub" style="display:block;margin-top:8px">' + esc(t('recs')) + '</label><textarea id="rr"></textarea>' +
+      '<div class="acts"><button class="btn" id="rok">' + esc(t('saveReview')) + '</button><button class="btn alt" id="rno">' + esc(t('cancel')) + '</button></div>', function (m) {
+      function mark() { m.querySelectorAll('[data-v]').forEach(function (b) { var on = b.getAttribute('data-v') === verdict; b.style.background = on ? VCOL[verdict] : ''; b.style.color = on ? '#fff' : VCOL[b.getAttribute('data-v')]; }); }
+      m.querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { verdict = b.getAttribute('data-v'); mark(); }; });
+      mark();
+      m.querySelector('#rno').onclick = function () { m.remove(); };
+      m.querySelector('#rok').onclick = function () {
+        var sid = m.querySelector('#rs').value, notes = m.querySelector('#rn').value.trim(), recs = m.querySelector('#rr').value.trim();
+        if (verdict !== 'ok' && !notes && !recs) { c.toast(t('needNote'), true); return; }
+        var st = ss.filter(function (s) { return s.id === sid; })[0];
+        var btn = m.querySelector('#rok'); btn.disabled = true;
+        c.post('case_reviews', { case_id: caseId, verdict: verdict, stage_id: sid || null, stage_name: st ? st.name : null, notes: notes || null, recommendations: recs || null, author_name: ME.full_name })
+          .then(function () { c.logActivity('review_add', caseId, verdict + (st ? ' — ' + st.name : '')); m.remove(); c.toast(t('savedReview')); if (done) done(); })
+          .catch(function (e) { btn.disabled = false; if (e && e.message === 'session') return; c.toast(e && e.message || String(e), true); });
+      };
+    });
+  }
+  var refresh = function () { var b = document.getElementById('rf'); if (b) b.click(); };
+
+  function openDetail(id) {
+    var cs = caseOf(id); if (!cs) return;
+    var ss = D.byCase[id] || [], rv = D.revBy[id] || [];
+    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
+      '<h2>' + esc(t('stages')) + '</h2>' + (ss.length ? chipsHtml(ss) : '<div class="empty">' + esc(t('noStages')) + '</div>') +
+      '<h2>' + esc(t('reviews')) + '</h2>' + (rv.length ? rv.map(reviewHtml).join('') : '<div class="empty">' + esc(t('never')) + '</div>') +
+      '<div class="acts"><button class="btn" id="ar">＋ ' + esc(t('addReview')) + '</button><button class="btn alt" id="cl">' + esc(t('close')) + '</button></div>';
+    c.modal(h, function (m) {
+      m.querySelector('#cl').onclick = function () { m.remove(); };
+      m.querySelector('#ar').onclick = function () { m.remove(); openReviewForm(id, refresh); };
+    });
+  }
+
+  CFG.render = function (ctx, d, body, reload) {
+    var review = d.cases.filter(needsReview), live = [];
+    d.cases.forEach(function (cs) { (d.byCase[cs.id] || []).forEach(function (s) { if (s.status === 'working' || s.status === 'trial') live.push({ s: s, cs: cs }); }); });
+    var ql = q.trim().toLowerCase();
+    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
+    var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
+    h += '<div class="tabs">' + [['review', 'tReview', review.length], ['live', 'tLive', live.length], ['all', 'tAll', d.cases.length], ['notes', 'tNotes', d.reviews.length]].map(function (x) {
+      return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + '<span class="badge">' + x[2] + '</span></button>';
+    }).join('') + '</div>';
+    function caseCard(cs) {
+      var rv = d.revBy[cs.id] || [];
+      return '<div class="card hv" data-case="' + cs.id + '" style="cursor:pointer">' + caseHead(cs) + chipsHtml(d.byCase[cs.id] || []) + '<div class="kv"><span>' + esc(t('lastRev')) + ': ' + (rv.length ? vpill(rv[0].verdict) : esc(t('never'))) + '</span></div></div>';
+    }
+    if (tab === 'review') h += review.length ? review.map(caseCard).join('') : '<div class="empty">' + esc(t('noReview')) + '</div>';
+    else if (tab === 'live') h += live.length ? live.map(function (x) { return '<div class="card hv" data-case="' + x.cs.id + '" style="cursor:pointer">' + caseHead(x.cs) + '<div class="kv"><span>' + esc(t('stages')) + ': <b>' + esc(x.s.name) + '</b></span><span>' + esc(t('st_' + x.s.status)) + '</span>' + (x.s.technician_name ? '<span>' + esc(t('tech')) + ': <b>' + esc(x.s.technician_name) + '</b></span>' : '') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noLive')) + '</div>';
+    else if (tab === 'notes') h += d.reviews.length ? d.reviews.slice(0, 100).map(function (v) { var cs = caseOf(v.case_id); return '<div data-case="' + v.case_id + '" style="cursor:pointer"><div class="who" style="margin:8px 4px 0">' + (cs ? '#' + esc(cs.case_no) + ' ' + esc(cs.patient_name || '') : '') + '</div>' + reviewHtml(v) + '</div>'; }).join('') : '<div class="empty">' + esc(t('noNotes')) + '</div>';
+    else {
+      h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
+      h += cases.length ? cases.map(caseCard).join('') : '<div class="empty">' + esc(t('noCases')) + '</div>';
+    }
+    body.innerHTML = h;
+    body.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { tab = b.getAttribute('data-tab'); CFG.render(ctx, d, body, reload); }; });
+    var qi = body.querySelector('#q'); if (qi) { qi.oninput = function () { q = qi.value; var pos = qi.selectionStart; CFG.render(ctx, d, body, reload); var n = body.querySelector('#q'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }; }
+    body.querySelectorAll('[data-case]').forEach(function (el) { el.onclick = function () { openDetail(el.getAttribute('data-case')); }; });
+  };
+
+  CFG.codeLen = 20;
+  CFG.icon = '🔎';
+  CFG.title = { ar: 'بوابة المراقب', en: 'Quality Desk', fr: 'Poste du contrôleur' };
+  A.start();
+})();
+</script>
+</body>
+</html>
