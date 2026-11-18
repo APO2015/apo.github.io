@@ -21,9 +21,9 @@
 /* بوابة الفني — برتقالية. تعمل بنفس حساب الفني وكوده وصلاحياته (RLS) كما في البرنامج. */
 (function () {
   var S = {
-    ar: { tMine: 'عملي الآن', tAvail: 'متاحة لي', tAll: 'كل الحالات', tDone: 'أنجزتها', stages: 'المراحل', start: 'ابدأ', finish: 'تمت', toTrial: 'أرسل للتجربة', fromTrial: 'عادت من التجربة', editNote: 'ملاحظة', otherTech: 'مسؤول عنها', noMine: 'لا مراحل قيد العمل عندك الآن.', noAvail: 'لا مراحل متاحة للبدء.', noCases: 'لا حالات.', noDone: 'لا مراحل منجزة بعد.', trialNote: 'ملاحظات التجربة (اختياري)', stageNote: 'ملاحظة المرحلة', busy: 'هناك مرحلة جارية في هذه الحالة. أنهِها أولاً.', locked: 'المرحلة مقفلة بعد «تمت».', ok_start: 'بدأت المرحلة', ok_done: 'أُنجزت المرحلة', ok_trial: 'أُرسلت للتجربة', ok_ret: 'سُجّلت العودة من التجربة', ok_note: 'حُفظت الملاحظة', nostage: 'لا مراحل لهذه الحالة بعد (يضيفها المدير).', details: 'تفاصيل', mineTag: 'مرحلتي', close: 'إغلاق', hello: 'أهلاً', finishedAt: 'أُنجزت' },
-    en: { tMine: 'My work', tAvail: 'Available', tAll: 'All cases', tDone: 'Done by me', stages: 'Stages', start: 'Start', finish: 'Done', toTrial: 'Send to trial', fromTrial: 'Returned from trial', editNote: 'Note', otherTech: 'Assigned to', noMine: 'You have no stage in progress.', noAvail: 'No stage available to start.', noCases: 'No cases.', noDone: 'No finished stages yet.', trialNote: 'Trial notes (optional)', stageNote: 'Stage note', busy: 'Another stage of this case is in progress. Finish it first.', locked: 'The stage is locked after “Done”.', ok_start: 'Stage started', ok_done: 'Stage completed', ok_trial: 'Sent to trial', ok_ret: 'Return from trial recorded', ok_note: 'Note saved', nostage: 'No stages for this case yet (the manager adds them).', details: 'Details', mineTag: 'My stage', close: 'Close', hello: 'Hello', finishedAt: 'Finished' },
-    fr: { tMine: 'Mon travail', tAvail: 'Disponibles', tAll: 'Tous les cas', tDone: 'Terminées', stages: 'Étapes', start: 'Démarrer', finish: 'Terminée', toTrial: "Envoyer à l'essayage", fromTrial: "Retour d'essayage", editNote: 'Note', otherTech: 'Assignée à', noMine: "Aucune étape en cours chez vous.", noAvail: 'Aucune étape à démarrer.', noCases: 'Aucun cas.', noDone: 'Aucune étape terminée.', trialNote: "Notes d'essayage (facultatif)", stageNote: "Note de l'étape", busy: "Une autre étape de ce cas est en cours. Terminez-la d'abord.", locked: "L'étape est verrouillée après « Terminée ».", ok_start: 'Étape démarrée', ok_done: 'Étape terminée', ok_trial: "Envoyée à l'essayage", ok_ret: "Retour d'essayage enregistré", ok_note: 'Note enregistrée', nostage: "Pas encore d'étapes pour ce cas (le gérant les ajoute).", details: 'Détails', mineTag: 'Mon étape', close: 'Fermer', hello: 'Bonjour', finishedAt: 'Terminée' }
+    ar: { phadd: 'التقاط / اختيار صورة', phnoallow: 'لم يسمح المدير برفع الصور بعد.', phok: 'رُفعت الصورة.', phfail: 'تعذّر رفع الصورة.', phbad: 'الملف ليس صورة صالحة.', phonce: 'لكل حالة صورة واحدة؛ يستبدلها المدير من البرنامج.', tMine: 'عملي الآن', tAvail: 'متاحة لي', tAll: 'كل الحالات', tDone: 'أنجزتها', stages: 'المراحل', start: 'ابدأ', finish: 'تمت', toTrial: 'أرسل للتجربة', fromTrial: 'عادت من التجربة', editNote: 'ملاحظة', otherTech: 'مسؤول عنها', noMine: 'لا مراحل قيد العمل عندك الآن.', noAvail: 'لا مراحل متاحة للبدء.', noCases: 'لا حالات.', noDone: 'لا مراحل منجزة بعد.', trialNote: 'ملاحظات التجربة (اختياري)', stageNote: 'ملاحظة المرحلة', busy: 'هناك مرحلة جارية في هذه الحالة. أنهِها أولاً.', locked: 'المرحلة مقفلة بعد «تمت».', ok_start: 'بدأت المرحلة', ok_done: 'أُنجزت المرحلة', ok_trial: 'أُرسلت للتجربة', ok_ret: 'سُجّلت العودة من التجربة', ok_note: 'حُفظت الملاحظة', nostage: 'لا مراحل لهذه الحالة بعد (يضيفها المدير).', details: 'تفاصيل', mineTag: 'مرحلتي', close: 'إغلاق', hello: 'أهلاً', finishedAt: 'أُنجزت' },
+    en: { phadd: 'Take / choose photo', phnoallow: 'The manager has not allowed photo uploads yet.', phok: 'Photo uploaded.', phfail: 'Could not upload the photo.', phbad: 'The file is not a valid image.', phonce: 'One photo per case; the manager replaces it from the app.', tMine: 'My work', tAvail: 'Available', tAll: 'All cases', tDone: 'Done by me', stages: 'Stages', start: 'Start', finish: 'Done', toTrial: 'Send to trial', fromTrial: 'Returned from trial', editNote: 'Note', otherTech: 'Assigned to', noMine: 'You have no stage in progress.', noAvail: 'No stage available to start.', noCases: 'No cases.', noDone: 'No finished stages yet.', trialNote: 'Trial notes (optional)', stageNote: 'Stage note', busy: 'Another stage of this case is in progress. Finish it first.', locked: 'The stage is locked after “Done”.', ok_start: 'Stage started', ok_done: 'Stage completed', ok_trial: 'Sent to trial', ok_ret: 'Return from trial recorded', ok_note: 'Note saved', nostage: 'No stages for this case yet (the manager adds them).', details: 'Details', mineTag: 'My stage', close: 'Close', hello: 'Hello', finishedAt: 'Finished' },
+    fr: { phadd: 'Prendre / choisir une photo', phnoallow: 'Le gérant n’a pas encore autorisé l’envoi de photos.', phok: 'Photo envoyée.', phfail: 'Envoi de la photo impossible.', phbad: 'Le fichier n’est pas une image valide.', phonce: 'Une photo par cas ; le gérant la remplace depuis l’application.', tMine: 'Mon travail', tAvail: 'Disponibles', tAll: 'Tous les cas', tDone: 'Terminées', stages: 'Étapes', start: 'Démarrer', finish: 'Terminée', toTrial: "Envoyer à l'essayage", fromTrial: "Retour d'essayage", editNote: 'Note', otherTech: 'Assignée à', noMine: "Aucune étape en cours chez vous.", noAvail: 'Aucune étape à démarrer.', noCases: 'Aucun cas.', noDone: 'Aucune étape terminée.', trialNote: "Notes d'essayage (facultatif)", stageNote: "Note de l'étape", busy: "Une autre étape de ce cas est en cours. Terminez-la d'abord.", locked: "L'étape est verrouillée après « Terminée ».", ok_start: 'Étape démarrée', ok_done: 'Étape terminée', ok_trial: "Envoyée à l'essayage", ok_ret: "Retour d'essayage enregistré", ok_note: 'Note enregistrée', nostage: "Pas encore d'étapes pour ce cas (le gérant les ajoute).", details: 'Détails', mineTag: 'Mon étape', close: 'Fermer', hello: 'Bonjour', finishedAt: 'Terminée' }
   };
   var A = APO_STAFF, c = A.ctx, t = c.t, esc = c.esc, pill = c.pill;
   c.addStrings(S);
@@ -223,11 +223,59 @@
     });
     return out;
   }
+  /* ضغط الصورة في المتصفح قبل الرفع: أطول ضلع 1280 و JPEG ≤ ~200 ك.ب (كما في البرنامج؛ حد الخادم 1 ميغابايت) */
+  function compressImage(file) {
+    return new Promise(function (res, rej) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var W = im.naturalWidth, H = im.naturalHeight, k = Math.min(1, 1280 / Math.max(W, H));
+        var cw = Math.max(1, Math.round(W * k)), ch = Math.max(1, Math.round(H * k)), cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch; cv.getContext('2d').drawImage(im, 0, 0, cw, ch); URL.revokeObjectURL(url);
+        var qs = [0.82, 0.72, 0.62, 0.52, 0.42], i = 0;
+        (function step() { cv.toBlob(function (b) { if (!b) { rej(new Error('bad')); return; } if (b.size <= 200000 || i >= qs.length - 1) { res({ blob: b, w: cw, h: ch }); } else { i++; step(); } }, 'image/jpeg', qs[i]); })();
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); rej(new Error('bad')); };
+      im.src = url;
+    });
+  }
+  function noPhoto(m, caseId) {
+    m.firstChild.innerHTML = '<div class="empty">' + esc(t('nophoto')) + '</div><input type="file" id="pf" accept="image/*" capture="environment" style="display:none"><button class="btn block" id="pa">📷 ' + esc(t('phadd')) + '</button><button class="btn alt block" id="x">' + esc(t('close')) + '</button>';
+    m.querySelector('#x').onclick = function () { m.remove(); };
+    var pf = m.querySelector('#pf'), pa = m.querySelector('#pa');
+    pa.onclick = function () { pf.click(); };
+    pf.onchange = function () {
+      var f = pf.files && pf.files[0]; if (!f) return;
+      pa.disabled = true; pa.innerHTML = '<span class="spin">⟳</span> ' + esc(t('loading'));
+      var cs = caseOf(caseId);
+      c.get('lab_settings?select=photos_upload&limit=1').then(function (ls) {
+        if (!(ls && ls[0] && ls[0].photos_upload === true)) { c.toast(t('phnoallow'), true); throw new Error('handled'); }
+        return c.get('case_photos?select=id,size_bytes,deleted_at&case_id=eq.' + caseId + '&limit=1');
+      }).then(function (ex) {
+        var row = ex && ex[0];
+        if (row && !row.deleted_at && Number(row.size_bytes) > 0) { c.toast(t('phonce'), true); throw new Error('handled'); }
+        return compressImage(f).then(function (p) {
+          var path = ME.lab_id + '/' + caseId + '.jpg';
+          return c.upload('case-photos', path, p.blob, 'image/jpeg').then(function () {
+            var body = { storage_path: path, content_type: 'image/jpeg', size_bytes: p.blob.size, width: p.w, height: p.h, deleted_at: null, annotations: null };
+            if (row) return c.patch('case_photos?id=eq.' + row.id, body);
+            body.case_id = caseId; return c.post('case_photos', body);
+          });
+        });
+      }).then(function () {
+        c.logActivity('photo_add', caseId, 'photo uploaded', cs ? '#' + cs.case_no : null, 'case');
+        c.toast(t('phok')); m.remove();
+      }).catch(function (e) {
+        if (e && e.message === 'session') return;
+        if (!e || e.message !== 'handled') c.toast(e && e.message === 'bad' ? t('phbad') : t('phfail'), true);
+        pa.disabled = false; pa.innerHTML = '📷 ' + esc(t('phadd'));
+      });
+    };
+  }
   function openPhoto(caseId) {
     var m = c.modal('<div class="empty"><span class="spin">⟳</span> ' + esc(t('loading')) + '</div>');
     c.get('case_photos?select=storage_path,annotations,width,height,size_bytes&case_id=eq.' + caseId + '&deleted_at=is.null&limit=1').then(function (rows) {
       var r = rows && rows[0];
-      if (!r || !(Number(r.size_bytes) > 0) || !r.storage_path) { m.firstChild.innerHTML = '<div class="empty">' + esc(t('nophoto')) + '</div><button class="btn alt block" id="x">' + esc(t('close')) + '</button>'; m.querySelector('#x').onclick = function () { m.remove(); }; return; }
+      if (!r || !(Number(r.size_bytes) > 0) || !r.storage_path) { noPhoto(m, caseId); return; }
       return c.blob('case-photos', r.storage_path).then(function (blob) {
         var W = 1000, H = (Number(r.width) > 0 && Number(r.height) > 0) ? Math.round(1000 * r.height / r.width) : 1000, url = URL.createObjectURL(blob), svg = notesSvg(r.annotations, W, H);
         m.firstChild.innerHTML = '<div style="position:relative;line-height:0"><img src="' + url + '" style="width:100%;border-radius:12px;display:block" alt="">' + (svg ? '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">' + svg + '</svg>' : '') + '</div><button class="btn alt block" id="x">' + esc(t('close')) + '</button>';

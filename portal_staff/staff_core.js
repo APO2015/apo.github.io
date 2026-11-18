@@ -70,6 +70,12 @@
       return fetch(SUPABASE_URL + '/storage/v1/object/authenticated/' + bucket + '/' + path.split('/').map(encodeURIComponent).join('/'), { headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + sess.access } });
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); });
   }
+  /* رفع ملف إلى Storage الخاص بجلسة المستخدم (الخادم يفرض المجلد وموافقة المدير والحجم والنوع) */
+  function uploadBlob(bucket, path, blob, contentType) {
+    return ensureFresh().then(function () {
+      return fetch(SUPABASE_URL + '/storage/v1/object/' + bucket + '/' + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + sess.access, 'Content-Type': contentType, 'x-upsert': 'true' }, body: blob });
+    }).then(function (r) { if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; } return true; });
+  }
   function post(table, row) { return api('POST', table, row, { Prefer: 'return=minimal' }); }
   function patch(path, row) { return api('PATCH', path, row, { Prefer: 'return=minimal' }); }
   function rpc(name, args) { return api('POST', 'rpc/' + name, args || {}); }
@@ -161,7 +167,7 @@
   }
   ['click', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, function () { lastAct = Date.now(); }, { passive: true }); });
 
-  var ctx = { t: t, esc: esc, get: get, blob: fetchBlob, post: post, patch: patch, rpc: rpc, toast: toast, modal: modal, fmtDate: fmtDate, fmtTime: fmtTime, pill: pill, addStrings: addStrings, logActivity: logActivity, lang: function () { return lang; }, uid: function () { return sess && sess.uid; }, cfg: CFG, STATUS_COL: STATUS_COL };
+  var ctx = { t: t, esc: esc, get: get, blob: fetchBlob, upload: uploadBlob, post: post, patch: patch, rpc: rpc, toast: toast, modal: modal, fmtDate: fmtDate, fmtTime: fmtTime, pill: pill, addStrings: addStrings, logActivity: logActivity, lang: function () { return lang; }, uid: function () { return sess && sess.uid; }, cfg: CFG, STATUS_COL: STATUS_COL };
 
   var loading = false;
   function show() {
