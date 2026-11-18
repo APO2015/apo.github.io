@@ -1,0 +1,26 @@
+{
+ "name": "APO Workbench",
+ "short_name": "Workbench",
+ "description": "ورشة الفني",
+ "start_url": "./workbench.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#12100e",
+ "theme_color": "#ea580c",
+ "lang": "ar",
+ "dir": "rtl",
+ "icons": [
+  {
+   "src": "icon_workbench_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any maskable"
+  },
+  {
+   "src": "icon_workbench_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}

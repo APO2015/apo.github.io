@@ -1,0 +1,26 @@
+{
+ "name": "APO Ledger",
+ "short_name": "Ledger",
+ "description": "دفتر المحاسب",
+ "start_url": "./ledger.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#12100e",
+ "theme_color": "#7c3aed",
+ "lang": "ar",
+ "dir": "rtl",
+ "icons": [
+  {
+   "src": "icon_ledger_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any maskable"
+  },
+  {
+   "src": "icon_ledger_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
