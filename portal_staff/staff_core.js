@@ -111,7 +111,7 @@
 
   /* ---------- screens ---------- */
   function loginScreen(msg) {
-    root.innerHTML = '<div class="wrap"><header><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1><div class="tools">' + toolsHtml() + '</div></header>' +
+    root.innerHTML = '<div class="wrap"><header><div class="brand">' + logoImg() + '<h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1></div><div class="tools">' + toolsHtml() + '</div></header>' +
       '<div class="card"><div style="text-align:center;font-size:42px">' + (CFG.icon || '🔐') + '</div>' +
       '<div class="sub" style="text-align:center;margin:4px 0 12px">' + esc(t('sessinfo')) + '</div>' +
       '<label class="sub">' + esc(t('code')) + '</label><input class="code" id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' + esc(t('codeph')) + '">' +
@@ -224,11 +224,22 @@
 
   function logout(reason) { sess = null; ssDel(SKEY); clearInterval(idleTimer); loginScreen(reason ? t(reason) : ''); }
 
+  /* شعار المعمل بجانب اسمه: lab_identity_get (SQL 29) بجلسة الموظف نفسها. الفشل لا يمنع الدخول. */
+  function logoSrc(b64) { b64 = String(b64 || ''); if (!b64) return ''; if (b64.indexOf('data:') === 0) return b64; return 'data:image/' + (b64.indexOf('/9j/') === 0 ? 'jpeg' : 'png') + ';base64,' + b64; }
+  function logoImg() { var u = CFG._logo || cachedLogo(); return u ? '<img class="logo" alt="" src="' + u.replace(/"/g, '') + '">' : ''; }
+  function cachedLogo() { try { return localStorage.getItem('apo_lab_logo') || ''; } catch (e) { return ''; } }
+  function loadIdentity() {
+    return rpc('lab_identity_get').then(function (r) {
+      if (!r) return;
+      if (r.name) CFG._lab = r.name;
+      if (r.logo) { CFG._logo = logoSrc(r.logo); try { if (CFG._logo.length < 900000) localStorage.setItem('apo_lab_logo', CFG._logo); } catch (e) {} }
+    }).catch(function () {});
+  }
   function enter() {
     root.innerHTML = '<div class="wrap"><div class="empty"><span class="spin">⟳</span> ' + esc(t('loading')) + '</div></div>';
     Promise.resolve(CFG.identify ? CFG.identify(ctx) : null).then(function (ok) {
       if (ok && ok.error) { var k = ok.error; sess = null; ssDel(SKEY); loginScreen(t(k)); return; }
-      startIdle(); show();
+      return loadIdentity().then(function () { startIdle(); show(); });
     }).catch(function (e) { if (e && e.message === 'session') return; sess = null; ssDel(SKEY); loginScreen(t('neterr')); });
   }
   function startIdle() {
@@ -245,7 +256,7 @@
     var prev = root.firstChild; // keep UI while refreshing
     Promise.resolve(CFG.load(ctx)).then(function (data) {
       loading = false;
-      var head = '<div class="wrap"><header><div><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1><div class="who">' + esc((CFG._me && CFG._me.name) || '') + (CFG._lab ? ' · ' + esc(CFG._lab) : '') + '</div></div><div class="tools">' + toolsHtml() +
+      var head = '<div class="wrap"><header><div class="brand">' + logoImg() + '<div><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1><div class="who">' + esc((CFG._me && CFG._me.name) || '') + (CFG._lab ? ' · ' + esc(CFG._lab) : '') + '</div></div></div><div class="tools">' + toolsHtml() +
         '<button id="rf">⟳ ' + esc(t('refresh')) + '</button><button id="lo">' + esc(t('logout')) + '</button></div></header><div class="who" id="upd">' + esc(t('updated')) + ': ' + fmtTime() + '</div><div id="body"></div><footer>' + esc(t('foot')) + '</footer></div>';
       root.innerHTML = head;
       bindTools(function () { show(); });
