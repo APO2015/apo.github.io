@@ -13,6 +13,8 @@
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Arabic",Tahoma,sans-serif;line-height:1.5;padding:0 16px 40px}
 .wrap{max-width:760px;margin:0 auto}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0 8px}
+header .brand{display:flex;align-items:center;gap:10px;min-width:0}
+header .logo{width:44px;height:44px;border-radius:12px;object-fit:contain;background:#fff;border:1px solid rgba(128,128,128,.35);flex:none}
 header h1{font-size:18px;margin:0;color:var(--brand)}
 :root[data-theme="dark"] header h1{color:var(--sky)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) header h1{color:var(--sky)}}
@@ -68,7 +70,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
 <body>
 <div class="wrap">
   <header>
-    <h1 id="title">APO Digital Lab</h1>
+    <div class="brand"><img id="lablogo" class="logo" alt="" hidden><h1 id="title">APO Digital Lab</h1></div>
     <div class="lang" id="lang"></div>
   </header>
   <div id="app"></div>
@@ -245,6 +247,19 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
       body: JSON.stringify(body)
     }).then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); });
   }
+  /* شعار المعمل بجانب اسمه (SQL 50). مرة واحدة لكل كود؛ الفشل صامت ولا يؤثر على البوابة. */
+  var logoFor = '';
+  function loadLogo() {
+    if (logoFor === code) return; logoFor = code;
+    fetch(SUPABASE_URL + '/rest/v1/rpc/portal_lab_logo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY },
+      body: JSON.stringify({ p_code: code })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var im = document.getElementById('lablogo'); if (!im || !j || !j.logo) return;
+      var b = String(j.logo); im.src = b.indexOf('data:') === 0 ? b : 'data:image/' + (b.indexOf('/9j/') === 0 ? 'jpeg' : 'png') + ';base64,' + b; im.hidden = false;
+    }).catch(function () {});
+  }
   function loadTrials() {
     rpc('portal_trials', { p_code: code }).then(function (j) {
       var m = {};
@@ -282,7 +297,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
           loading = false;
           if (j && j.blocked) { error = t().blocked.replace('%m', Math.max(1, Math.ceil((j.retry_after || 60) / 60))); if (!isRefresh) data = null; else { data = data; note = error; error = ''; } }
           else if (!j) { data = null; error = t().bad; try { sessionStorage.removeItem('apo_portal_code'); } catch (e) {} }
-          else { data = j; lastAt = new Date(); if (isRefresh) note = 'ok'; try { sessionStorage.setItem('apo_portal_code', code); } catch (e) {} loadTrials(); if (history.replaceState) history.replaceState(null, '', location.pathname + '?l=' + lang); }
+          else { data = j; lastAt = new Date(); if (isRefresh) note = 'ok'; try { sessionStorage.setItem('apo_portal_code', code); } catch (e) {} loadTrials(); loadLogo(); if (history.replaceState) history.replaceState(null, '', location.pathname + '?l=' + lang); }
           render();
         }, wait);
       })
