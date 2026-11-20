@@ -226,7 +226,9 @@
 
   /* شعار المعمل بجانب اسمه: lab_identity_get (SQL 29) بجلسة الموظف نفسها. الفشل لا يمنع الدخول. */
   function logoSrc(b64) { b64 = String(b64 || ''); if (!b64) return ''; if (b64.indexOf('data:') === 0) return b64; return 'data:image/' + (b64.indexOf('/9j/') === 0 ? 'jpeg' : 'png') + ';base64,' + b64; }
-  function logoImg() { var u = CFG._logo || cachedLogo(); return u ? '<img class="logo" alt="" src="' + u.replace(/"/g, '') + '">' : ''; }
+  var DEFAULT_LOGO = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='22.5' fill='%2338BDF8' fill-opacity='.15' stroke='%2338BDF8' stroke-width='1.5'/%3E%3Cg transform='translate(11.5 11.5) scale(1.0417)'%3E%3Cpath fill='%2338BDF8' d='M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10-2h4v2h-4V4zm6 11h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z'/%3E%3C/g%3E%3C/svg%3E";
+  // شعار المعمل؛ وإن لم يوجد فالأيقونة الافتراضية نفسها المعتمدة داخل النظام الرئيسي
+  function logoImg() { var u = CFG._logo || cachedLogo() || DEFAULT_LOGO; return '<img class="logo" alt="" src="' + u.replace(/"/g, '') + '">'; }
   function cachedLogo() { try { return localStorage.getItem('apo_lab_logo') || ''; } catch (e) { return ''; } }
   function loadIdentity() {
     return rpc('lab_identity_get').then(function (r) {
