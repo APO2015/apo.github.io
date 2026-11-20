@@ -1,0 +1,41 @@
+{
+ "name": "APO Client Portal",
+ "short_name": "Client Portal",
+ "description": "بوابة العميل — متابعة الحالات والفواتير",
+ "start_url": "./portal.html",
+ "id": "./portal.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#15507f",
+ "lang": "ar",
+ "dir": "rtl",
+ "icons": [
+  {
+   "src": "apo_icon_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "apo_icon_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "apo_icon_maskable_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "maskable"
+  },
+  {
+   "src": "apo_icon_maskable_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "orientation": "any",
+ "prefer_related_applications": false
+}
