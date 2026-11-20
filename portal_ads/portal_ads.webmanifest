@@ -1,0 +1,41 @@
+{
+ "name": "APO Advertisers Portal",
+ "short_name": "APO Ads",
+ "description": "بوابة المعلنين — APO-Digital Lab",
+ "start_url": "./index.html",
+ "id": "./index.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#047857",
+ "lang": "ar",
+ "dir": "rtl",
+ "icons": [
+  {
+   "src": "apo_icon_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "apo_icon_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "apo_icon_maskable_192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "maskable"
+  },
+  {
+   "src": "apo_icon_maskable_512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "orientation": "any",
+ "prefer_related_applications": false
+}
