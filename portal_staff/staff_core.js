@@ -111,7 +111,7 @@
 
   /* ---------- screens ---------- */
   function loginScreen(msg) {
-    root.innerHTML = '<div class="wrap"><header><div class="brand">' + logoImg() + '<h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1></div><div class="tools">' + toolsHtml() + '</div></header>' +
+    root.innerHTML = '<div class="wrap"><header><div class="brand">' + logoImg() + '<div><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1>' + (labNameCached() ? '<div class="who">' + esc(labNameCached()) + '</div>' : '') + '</div></div><div class="tools">' + toolsHtml() + '</div></header>' +
       '<div class="card"><div style="text-align:center;font-size:42px">' + (CFG.icon || '🔐') + '</div>' +
       '<div class="sub" style="text-align:center;margin:4px 0 12px">' + esc(t('sessinfo')) + '</div>' +
       '<label class="sub">' + esc(t('code')) + '</label><input class="code" id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' + esc(t('codeph')) + '">' +
@@ -151,15 +151,27 @@
     var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
     var cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(src, 0, 0, cw, ch);
     function viaJs() {
+      // مكتبة jsQR على عدة أحجام: صور الشاشات/الطباعة قد تُقرأ بحجم دون آخر
       return loadJsQR().then(function (lib) {
         if (!lib) throw new Error('nodecoder');
-        var d = cx.getImageData(0, 0, cw, ch), r = lib(d.data, cw, ch, { inversionAttempts: 'attemptBoth' });
-        return r && r.data ? r.data : null;
+        var sizes = [1024, 640, 420, 800];
+        for (var i = 0; i < sizes.length; i++) {
+          var kk = Math.min(1, sizes[i] / Math.max(w, h)), ww = Math.max(1, Math.round(w * kk)), hh = Math.max(1, Math.round(h * kk));
+          var c2 = document.createElement('canvas'); c2.width = ww; c2.height = hh;
+          var x2 = c2.getContext('2d', { willReadFrequently: true }); x2.drawImage(src, 0, 0, ww, hh);
+          var d = x2.getImageData(0, 0, ww, hh), r = lib(d.data, ww, hh, { inversionAttempts: 'attemptBoth' });
+          if (r && r.data) return r.data;
+        }
+        return null;
       });
     }
     if ('BarcodeDetector' in window && !nativeBroken) {
       var det; try { det = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { nativeBroken = true; return viaJs(); }
-      return det.detect(cv).then(function (r) { return r && r.length ? String(r[0].rawValue || '') : null; }).catch(function () { nativeBroken = true; return viaJs(); });
+      // بعض الهواتف (شاومي/بوكو) فيها BarcodeDetector لا يجد شيئاً أبداً: إن لم يجد نلجأ إلى jsQR بدل الاستسلام
+      return det.detect(cv).then(function (r) {
+        if (r && r.length && r[0].rawValue) return String(r[0].rawValue);
+        return viaJs().catch(function () { return null; });
+      }).catch(function () { nativeBroken = true; return viaJs(); });
     }
     return viaJs();
   }
@@ -207,10 +219,12 @@
   /* ---------- تثبيت البوابة كتطبيق (PWA) ---------- */
   var deferredInstall = null;
   function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
-  function hideInstall(remember) { var b = document.getElementById('instbar'); if (b) b.remove(); if (remember) { try { localStorage.setItem('apo_inst_no', '1'); } catch (e) {} } }
+  // الإخفاء خاص بكل بوابة (لا يُسكت بوابة بسبب إغلاق أخرى) وينتهي بعد 3 أيام
+  function instKey() { return 'apo_inst_no_' + (location.pathname.split('/').pop() || 'x'); }
+  function hideInstall(remember) { var b = document.getElementById('instbar'); if (b) b.remove(); if (remember) { try { localStorage.setItem(instKey(), String(Date.now())); } catch (e) {} } }
   function showInstall(ios) {
     if (document.getElementById('instbar') || isStandalone()) return;
-    try { if (localStorage.getItem('apo_inst_no') === '1') return; } catch (e) {}
+    try { var dn = parseInt(localStorage.getItem(instKey()) || '0', 10); if (dn && Date.now() - dn < 3 * 86400000) return; } catch (e) {}
     var b = document.createElement('div'); b.id = 'instbar';
     b.innerHTML = (ios ? '<span>' + esc(t('iosinst')) + '</span>' : '<button class="btn" id="instgo">' + esc(t('instbtn')) + '</button>') + '<button class="x" id="instx" aria-label="x">✕</button>';
     document.body.appendChild(b);
@@ -229,11 +243,13 @@
   var DEFAULT_LOGO = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='22.5' fill='%2338BDF8' fill-opacity='.15' stroke='%2338BDF8' stroke-width='1.5'/%3E%3Cg transform='translate(11.5 11.5) scale(1.0417)'%3E%3Cpath fill='%2338BDF8' d='M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10-2h4v2h-4V4zm6 11h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z'/%3E%3C/g%3E%3C/svg%3E";
   // شعار المعمل؛ وإن لم يوجد فالأيقونة الافتراضية نفسها المعتمدة داخل النظام الرئيسي
   function logoImg() { var u = CFG._logo || cachedLogo() || DEFAULT_LOGO; return '<img class="logo" alt="" src="' + u.replace(/"/g, '') + '">'; }
+  // اسم المعمل يُحفظ على الجهاز بعد أول دخول فيظهر في صفحة الدخول مع الشعار
+  function labNameCached() { return CFG._lab || (function () { try { return localStorage.getItem('apo_lab_name') || ''; } catch (e) { return ''; } })(); }
   function cachedLogo() { try { return localStorage.getItem('apo_lab_logo') || ''; } catch (e) { return ''; } }
   function loadIdentity() {
     return rpc('lab_identity_get').then(function (r) {
       if (!r) return;
-      if (r.name) CFG._lab = r.name;
+      if (r.name) { CFG._lab = r.name; try { localStorage.setItem('apo_lab_name', String(r.name).slice(0, 80)); } catch (e) {} }
       if (r.logo) { CFG._logo = logoSrc(r.logo); try { if (CFG._logo.length < 900000) localStorage.setItem('apo_lab_logo', CFG._logo); } catch (e) {} }
     }).catch(function () {});
   }
@@ -258,7 +274,7 @@
     var prev = root.firstChild; // keep UI while refreshing
     Promise.resolve(CFG.load(ctx)).then(function (data) {
       loading = false;
-      var head = '<div class="wrap"><header><div class="brand">' + logoImg() + '<div><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1><div class="who">' + esc((CFG._me && CFG._me.name) || '') + (CFG._lab ? ' · ' + esc(CFG._lab) : '') + '</div></div></div><div class="tools">' + toolsHtml() +
+      var head = '<div class="wrap"><header><div class="brand">' + logoImg() + '<div><h1>' + esc((CFG.title && CFG.title[lang]) || 'APO') + '</h1><div class="who">' + esc((CFG._me && CFG._me.name) || '') + (labNameCached() ? ' · ' + esc(labNameCached()) : '') + '</div></div></div><div class="tools">' + toolsHtml() +
         '<button id="rf">⟳ ' + esc(t('refresh')) + '</button><button id="lo">' + esc(t('logout')) + '</button></div></header><div class="who" id="upd">' + esc(t('updated')) + ': ' + fmtTime() + '</div><div id="body"></div><footer>' + esc(t('foot')) + '</footer></div>';
       root.innerHTML = head;
       bindTools(function () { show(); });
