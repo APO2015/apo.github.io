@@ -71,7 +71,7 @@
 
   CFG.load = function (ctx) {
     return Promise.all([
-      ctx.get('cases?select=id,case_no,patient_name,work_type,status,due_date,received_at,material,shade,teeth,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
+      ctx.get('cases?select=id,case_no,case_code,patient_name,work_type,status,due_date,received_at,material,shade,teeth,pontic_types,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
       ctx.get('case_stages?select=*&deleted_at=is.null&order=seq.asc&limit=6000'),
       ctx.get('case_trials?select=*&deleted_at=is.null&returned_at=is.null&limit=2000')
     ]).then(function (r) {
@@ -97,7 +97,7 @@
     }).join('') + '</div>';
   }
   function caseHead(cs) {
-    return '<div class="row"><div><span class="no ltr">#' + esc(cs.case_no) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
+    return '<div class="row"><div><span class="no ltr">#' + esc(window.APO_caseRef(cs)) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
       '<div class="kv"><span>' + esc(t(cs.work_type) === cs.work_type ? cs.work_type : t(cs.work_type)) + '</span>' + (cs.due_date ? '<span>' + esc(t('due')) + ': <b>' + esc(c.fmtDate(cs.due_date)) + '</b></span>' : '') + '</div>';
   }
 
@@ -262,7 +262,7 @@
           });
         });
       }).then(function () {
-        c.logActivity('photo_add', caseId, 'photo uploaded', cs ? '#' + cs.case_no : null, 'case');
+        c.logActivity('photo_add', caseId, 'photo uploaded', cs ? '#' + window.APO_caseRef(cs, true) : null, 'case');
         c.toast(t('phok')); m.remove();
       }).catch(function (e) {
         if (e && e.message === 'session') return;
@@ -286,7 +286,7 @@
   function openDetail(id) {
     var cs = caseOf(id); if (!cs) return;
     var ss = stagesOf(id);
-    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
+    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + window.APO_ponticHtml(cs.pontic_types) + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
       (ss.length ? chipsHtml(ss) : '<div class="empty">' + esc(t('nostage')) + '</div>');
     ss.forEach(function (s) { if (!s.technician_id || s.technician_id === ME.id) { h += stageCard(s, false); } });
     h += '<div class="acts"><button class="btn alt" id="ph">📷 ' + esc(t('photo')) + '</button></div>';
@@ -318,14 +318,14 @@
       if (!active.length) { var first = ss.filter(function (s) { return s.status === 'pending'; })[0]; if (first && mineStage(first)) avail.push(first); }
     });
     var ql = q.trim().toLowerCase();
-    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
+    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.case_code || '') + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
     var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
     h += '<div class="tabs">' + [['mine', 'tMine', mine.length], ['avail', 'tAvail', avail.length], ['all', 'tAll', d.cases.length], ['done', 'tDone', d.done.length]].map(function (x) {
       return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + '<span class="badge">' + x[2] + '</span></button>';
     }).join('') + '</div>';
     if (tab === 'mine') h += mine.length ? mine.map(function (s) { return stageCard(s, true); }).join('') : '<div class="empty">' + esc(t('noMine')) + '</div>';
     else if (tab === 'avail') h += avail.length ? avail.map(function (s) { return stageCard(s, true); }).join('') : '<div class="empty">' + esc(t('noAvail')) + '</div>';
-    else if (tab === 'done') h += d.done.length ? d.done.slice().sort(function (a, b) { return String(b.finished_at || '').localeCompare(String(a.finished_at || '')); }).slice(0, 80).map(function (s) { var cs = caseOf(s.case_id); return '<div class="card"><b class="ltr">' + (cs ? '#' + esc(cs.case_no) : '') + '</b> ' + esc(cs ? cs.patient_name || '' : '') + '<div class="kv"><span>' + esc(s.name) + '</span><span>' + esc(t('finishedAt')) + ': ' + esc(c.fmtDate(s.finished_at)) + '</span></div></div>'; }).join('') : '<div class="empty">' + esc(t('noDone')) + '</div>';
+    else if (tab === 'done') h += d.done.length ? d.done.slice().sort(function (a, b) { return String(b.finished_at || '').localeCompare(String(a.finished_at || '')); }).slice(0, 80).map(function (s) { var cs = caseOf(s.case_id); return '<div class="card"><b class="ltr">' + (cs ? '#' + esc(window.APO_caseRef(cs)) : '') + '</b> ' + esc(cs ? cs.patient_name || '' : '') + '<div class="kv"><span>' + esc(s.name) + '</span><span>' + esc(t('finishedAt')) + ': ' + esc(c.fmtDate(s.finished_at)) + '</span></div></div>'; }).join('') : '<div class="empty">' + esc(t('noDone')) + '</div>';
     else {
       h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
       h += cases.length ? cases.map(function (cs) { return '<div class="card hv" data-case="' + cs.id + '" style="cursor:pointer">' + caseHead(cs) + chipsHtml(d.byCase[cs.id] || []) + '</div>'; }).join('') : '<div class="empty">' + esc(t('noCases')) + '</div>';
