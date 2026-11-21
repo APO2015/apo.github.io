@@ -50,15 +50,27 @@
     var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
     var cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(src, 0, 0, cw, ch);
     function viaJs() {
+      // مكتبة jsQR على عدة أحجام: صور الشاشات/الطباعة قد تُقرأ بحجم دون آخر
       return loadJsQR().then(function (lib) {
         if (!lib) throw new Error('nodecoder');
-        var d = cx.getImageData(0, 0, cw, ch), r = lib(d.data, cw, ch, { inversionAttempts: 'attemptBoth' });
-        return r && r.data ? r.data : null;
+        var sizes = [1024, 640, 420, 800];
+        for (var i = 0; i < sizes.length; i++) {
+          var kk = Math.min(1, sizes[i] / Math.max(w, h)), ww = Math.max(1, Math.round(w * kk)), hh = Math.max(1, Math.round(h * kk));
+          var c2 = document.createElement('canvas'); c2.width = ww; c2.height = hh;
+          var x2 = c2.getContext('2d', { willReadFrequently: true }); x2.drawImage(src, 0, 0, ww, hh);
+          var d = x2.getImageData(0, 0, ww, hh), r = lib(d.data, ww, hh, { inversionAttempts: 'attemptBoth' });
+          if (r && r.data) return r.data;
+        }
+        return null;
       });
     }
     if ('BarcodeDetector' in window && !nativeBroken) {
       var det; try { det = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { nativeBroken = true; return viaJs(); }
-      return det.detect(cv).then(function (r) { return r && r.length ? String(r[0].rawValue || '') : null; }).catch(function () { nativeBroken = true; return viaJs(); });
+      // بعض الهواتف (شاومي/بوكو) فيها BarcodeDetector لا يجد شيئاً أبداً: إن لم يجد نلجأ إلى jsQR بدل الاستسلام
+      return det.detect(cv).then(function (r) {
+        if (r && r.length && r[0].rawValue) return String(r[0].rawValue);
+        return viaJs().catch(function () { return null; });
+      }).catch(function () { nativeBroken = true; return viaJs(); });
     }
     return viaJs();
   }
@@ -124,10 +136,10 @@
   /* ---------- تثبيت كتطبيق ---------- */
   var deferred = null, KEY = 'apo_inst_no_' + (CFG.kind || 'p');
   function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
-  function hideBar(remember) { var b = document.getElementById('instbar'); if (b) b.remove(); if (remember) { try { localStorage.setItem(KEY, '1'); } catch (e) {} } }
+  function hideBar(remember) { var b = document.getElementById('instbar'); if (b) b.remove(); if (remember) { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} } }
   function showBar(mode) {
     if (document.getElementById('instbar') || standalone()) return;
-    try { if (localStorage.getItem(KEY) === '1') return; } catch (e) {}
+    try { var dn = parseInt(localStorage.getItem(KEY) || '0', 10); if (dn && Date.now() - dn < 3 * 86400000) return; } catch (e) {}
     var t = L(), b = document.createElement('div'); b.id = 'instbar';
     b.style.cssText = 'position:fixed;inset-inline:12px;bottom:12px;max-width:520px;margin:0 auto;background:var(--card,#fff);color:var(--ink,#111);border:1.5px solid var(--brand,#15507f);border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:45;box-shadow:0 8px 30px rgba(0,0,0,.35);font-size:14px';
     b.innerHTML = (mode === 'btn' ? '<button type="button" id="instgo" style="flex:1;border:0;border-radius:12px;padding:11px;font-size:15px;font-weight:700;background:var(--brand,#15507f);color:#fff;cursor:pointer">📲 ' + esc(t.inst) + '</button>' : '<span>' + esc(mode === 'ios' ? t.iosinst : t.manual) + '</span>') +
