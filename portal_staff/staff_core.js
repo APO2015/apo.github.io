@@ -245,6 +245,51 @@
   function logoImg() { var u = CFG._logo || cachedLogo() || DEFAULT_LOGO; return '<img class="logo" alt="" src="' + u.replace(/"/g, '') + '">'; }
   // اسم المعمل يُحفظ على الجهاز بعد أول دخول فيظهر في صفحة الدخول مع الشعار
   function labNameCached() { return CFG._lab || (function () { try { return localStorage.getItem('apo_lab_name') || ''; } catch (e) { return ''; } })(); }
+  // رقم الحالة الفريد (SQL 52): TAG+ddMMyyyy+تسلسل ← عرض كامل TAG-ddMMyyyy-N أو مختصر dd/MM · N؛ وإلا الرقم الداخلي
+  function caseRef(cs, full) {
+    var no = cs && cs.case_no, m = /^([2-9A-HJKMNP-Z]{5})(\d{2})(\d{2})(\d{4})(\d+)$/.exec((cs && cs.case_code) || '');
+    if (!m) return String(no == null ? '' : no);
+    return full ? m[1] + '-' + m[2] + m[3] + m[4] + '-' + m[5] : m[2] + '/' + m[3] + ' \u00B7 ' + m[5];
+  }
+  window.APO_caseRef = caseRef;
+
+  // ---- أشكال الجسر (Pontic): رسم SVG مطابق لرسم التطبيق + تحليل الترميز "14:ovate;15:sanitary" ----
+  var PONTIC_NAMES = { ridge_lap: 'Ridge lap', mod_ridge_lap: 'Modified ridge lap', stein: 'Stein', sanitary: 'Sanitary', ovate: 'Ovate', conical: 'Conical' };
+  var PONTIC_D = {
+    ridge_lap: 'L80 R80 Q50 62 26 80',
+    mod_ridge_lap: 'L62 R62 Q55 66 26 80',
+    stein: 'L70 R70 L26 70',
+    sanitary: 'L50 R50 Q50 58 26 50',
+    ovate: 'L62 R62 Q50 92 30 62',
+    conical: 'L56 R56 Q56 66 50 76 Q44 66 26 56'
+  };
+  function ponticSvg(type, px) {
+    var spec = PONTIC_D[type]; if (!spec) return '';
+    var f = {
+      ridge_lap: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L74 80 Q50 62 26 80 Z',
+      mod_ridge_lap: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L74 62 Q55 66 26 80 Z',
+      stein: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L74 70 L26 70 Z',
+      sanitary: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L74 50 Q50 58 26 50 Z',
+      ovate: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L70 62 Q50 92 30 62 Z',
+      conical: 'M26 15 Q26 10 32 10 L68 10 Q74 10 74 15 L74 56 Q56 66 50 76 Q44 66 26 56 Z'
+    }[type];
+    var ridge = type === 'ovate' ? 'M0 100 L0 80 Q12 66 28 66 Q50 96 72 66 Q88 66 100 80 L100 100 Z' : 'M0 100 L0 80 Q50 52 100 80 L100 100 Z';
+    return '<svg viewBox="0 0 100 100" width="' + (px || 56) + '" height="' + (px || 56) + '" aria-label="' + PONTIC_NAMES[type] + '"><path d="' + ridge + '" fill="#f9a8d4" stroke="#f472b6"/><path d="' + f + '" fill="#f8fafc" stroke="#0369a1" stroke-width="2"/></svg>';
+  }
+  function parsePontics(raw) {
+    var out = [];
+    String(raw || '').split(/[;,\s]+/).forEach(function (p) {
+      var kv = p.split(':'); if (kv.length === 2 && /^[1-4][1-8]$/.test(kv[0]) && PONTIC_NAMES[kv[1]]) out.push({ tooth: kv[0], type: kv[1] });
+    });
+    return out;
+  }
+  function ponticHtml(raw, esc2) {
+    var a = parsePontics(raw); if (!a.length) return '';
+    return '<div class="card" style="display:flex;gap:10px;flex-wrap:wrap">' + a.map(function (x) {
+      return '<span style="text-align:center;font-size:12px">' + ponticSvg(x.type, 56) + '<br><b>' + x.tooth + '</b> ' + PONTIC_NAMES[x.type] + '</span>';
+    }).join('') + '</div>';
+  }
+  window.APO_ponticHtml = ponticHtml;
   function cachedLogo() { try { return localStorage.getItem('apo_lab_logo') || ''; } catch (e) { return ''; } }
   function loadIdentity() {
     return rpc('lab_identity_get').then(function (r) {

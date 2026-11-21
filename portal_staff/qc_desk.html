@@ -44,7 +44,7 @@
 
   CFG.load = function (ctx) {
     return Promise.all([
-      ctx.get('cases?select=id,case_no,patient_name,work_type,status,due_date,received_at,material,shade,teeth,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
+      ctx.get('cases?select=id,case_no,case_code,patient_name,work_type,status,due_date,received_at,material,shade,teeth,pontic_types,notes,is_remake&deleted_at=is.null&status=not.in.(delivered,cancelled)&order=case_no.desc&limit=400'),
       ctx.get('case_stages?select=*&deleted_at=is.null&order=seq.asc&limit=6000'),
       ctx.get('case_reviews?select=*&deleted_at=is.null&order=created_at.desc&limit=1500')
     ]).then(function (r) {
@@ -59,7 +59,7 @@
   function caseOf(id) { return D.cases.filter(function (x) { return x.id === id; })[0]; }
   function vpill(v) { return '<span class="pill" style="background:' + (VCOL[v] || '#64748b') + '">' + esc(t('v_' + v)) + '</span>'; }
   function caseHead(cs) {
-    return '<div class="row"><div><span class="no ltr">#' + esc(cs.case_no) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
+    return '<div class="row"><div><span class="no ltr">#' + esc(window.APO_caseRef(cs)) + '</span> ' + (cs.is_remake ? '<span class="pill" style="background:#7e57c2">' + esc(t('remake')) + '</span> ' : '') + esc(cs.patient_name || '') + '</div>' + pill(cs.status) + '</div>' +
       '<div class="kv"><span>' + esc(t(cs.work_type) === cs.work_type ? cs.work_type : t(cs.work_type)) + '</span>' + (cs.due_date ? '<span>' + esc(t('due')) + ': <b>' + esc(c.fmtDate(cs.due_date)) + '</b></span>' : '') + '</div>';
   }
   function chipsHtml(stages) {
@@ -109,7 +109,7 @@
   function openDetail(id) {
     var cs = caseOf(id); if (!cs) return;
     var ss = D.byCase[id] || [], rv = D.revBy[id] || [];
-    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
+    var h = caseHead(cs) + '<div class="kv">' + ['material', 'shade', 'teeth'].map(function (k) { return cs[k] ? '<span>' + esc(t(k)) + ': <b>' + esc(cs[k]) + '</b></span>' : ''; }).join('') + '</div>' + window.APO_ponticHtml(cs.pontic_types) + (cs.notes ? '<div class="card">📝 ' + esc(cs.notes) + '</div>' : '') +
       '<h2>' + esc(t('stages')) + '</h2>' + (ss.length ? chipsHtml(ss) : '<div class="empty">' + esc(t('noStages')) + '</div>') +
       '<h2>' + esc(t('reviews')) + '</h2>' + (rv.length ? rv.map(reviewHtml).join('') : '<div class="empty">' + esc(t('never')) + '</div>') +
       '<div class="acts"><button class="btn" id="ar">＋ ' + esc(t('addReview')) + '</button><button class="btn alt" id="cl">' + esc(t('close')) + '</button></div>';
@@ -123,7 +123,7 @@
     var review = d.cases.filter(needsReview), live = [];
     d.cases.forEach(function (cs) { (d.byCase[cs.id] || []).forEach(function (s) { if (s.status === 'working' || s.status === 'trial') live.push({ s: s, cs: cs }); }); });
     var ql = q.trim().toLowerCase();
-    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
+    var cases = d.cases.filter(function (cs) { return !ql || ('#' + cs.case_no + ' ' + (cs.case_code || '') + ' ' + (cs.patient_name || '') + ' ' + (cs.work_type || '')).toLowerCase().indexOf(ql) >= 0; });
     var h = '<div class="sub" style="margin-top:6px">' + esc(t('hello')) + ' ' + esc(ME.full_name) + '</div>';
     h += '<div class="tabs">' + [['review', 'tReview', review.length], ['live', 'tLive', live.length], ['all', 'tAll', d.cases.length], ['notes', 'tNotes', d.reviews.length]].map(function (x) {
       return '<button data-tab="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + esc(t(x[1])) + '<span class="badge">' + x[2] + '</span></button>';
@@ -134,7 +134,7 @@
     }
     if (tab === 'review') h += review.length ? review.map(caseCard).join('') : '<div class="empty">' + esc(t('noReview')) + '</div>';
     else if (tab === 'live') h += live.length ? live.map(function (x) { return '<div class="card hv" data-case="' + x.cs.id + '" style="cursor:pointer">' + caseHead(x.cs) + '<div class="kv"><span>' + esc(t('stages')) + ': <b>' + esc(x.s.name) + '</b></span><span>' + esc(t('st_' + x.s.status)) + '</span>' + (x.s.technician_name ? '<span>' + esc(t('tech')) + ': <b>' + esc(x.s.technician_name) + '</b></span>' : '') + '</div></div>'; }).join('') : '<div class="empty">' + esc(t('noLive')) + '</div>';
-    else if (tab === 'notes') h += d.reviews.length ? d.reviews.slice(0, 100).map(function (v) { var cs = caseOf(v.case_id); return '<div data-case="' + v.case_id + '" style="cursor:pointer"><div class="who" style="margin:8px 4px 0">' + (cs ? '#' + esc(cs.case_no) + ' ' + esc(cs.patient_name || '') : '') + '</div>' + reviewHtml(v) + '</div>'; }).join('') : '<div class="empty">' + esc(t('noNotes')) + '</div>';
+    else if (tab === 'notes') h += d.reviews.length ? d.reviews.slice(0, 100).map(function (v) { var cs = caseOf(v.case_id); return '<div data-case="' + v.case_id + '" style="cursor:pointer"><div class="who" style="margin:8px 4px 0">' + (cs ? '#' + esc(window.APO_caseRef(cs)) + ' ' + esc(cs.patient_name || '') : '') + '</div>' + reviewHtml(v) + '</div>'; }).join('') : '<div class="empty">' + esc(t('noNotes')) + '</div>';
     else {
       h += '<div class="search"><input id="q" placeholder="' + esc(t('search')) + '" value="' + esc(q) + '"></div>';
       h += cases.length ? cases.map(caseCard).join('') : '<div class="empty">' + esc(t('noCases')) + '</div>';
@@ -147,7 +147,7 @@
 
   CFG.codeLen = 20;
   CFG.icon = '🔎';
-  CFG.title = { ar: 'بوابة المراقب', en: 'Quality Desk', fr: 'Poste du contrôleur' };
+  CFG.title = { ar: 'بوابة المراقب', en: 'Quality control', fr: 'Contrôleur qualité' };
   A.start();
 })();
 </script>
