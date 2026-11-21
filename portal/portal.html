@@ -142,6 +142,13 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
   var data = null, error = '', loading = false, note = '';
   var trials = {}, tOpen = null, tDec = '', tBusy = false, tMsg = '';
   var $app = document.getElementById('app');
+  // رقم الحالة الفريد (SQL 52): TAG+ddMMyyyy+تسلسل ← عرض كامل TAG-ddMMyyyy-N أو مختصر dd/MM · N؛ وإلا الرقم الداخلي
+  function caseRef(cs, full) {
+    var no = cs && cs.case_no, m = /^([2-9A-HJKMNP-Z]{5})(\d{2})(\d{2})(\d{4})(\d+)$/.exec((cs && cs.case_code) || '');
+    if (!m) return String(no == null ? '' : no);
+    return full ? m[1] + '-' + m[2] + m[3] + m[4] + '-' + m[5] : m[2] + '/' + m[3] + ' \u00B7 ' + m[5];
+  }
+
   // اسم المعمل وشعاره: يُحفظان على هذا المتصفح بعد أول دخول، ويُجلبان بمجرد كتابة/مسح كود صحيح — فتظهر هوية المعمل في صفحة الدخول أيضاً
   var brand = { name: '', logo: '' };
   try { var bj = JSON.parse(localStorage.getItem('apo_cli_brand') || 'null'); if (bj && typeof bj === 'object') brand = { name: String(bj.name || ''), logo: String(bj.logo || '') }; } catch (e) {}
@@ -197,7 +204,7 @@ footer{text-align:center;color:var(--mute);font-size:12px;margin-top:26px}
 
   function caseCard(c) {
     var st = c.status || 'received', idx = ORDER.indexOf(st === 'trial' ? 'milling' : st), pct = st === 'cancelled' ? 0 : Math.round(((idx < 0 ? 0 : idx) + 1) / ORDER.length * 100);
-    var h = '<div class="card"><div class="row"><div><div class="no">' + esc(t().case) + ' #' + esc(c.case_no) + '</div><div class="sub">' + esc(t().wt[c.work_type] || c.work_type || '') + '</div></div>' +
+    var h = '<div class="card"><div class="row"><div><div class="no">' + esc(t().case) + ' #' + esc(caseRef(c, true)) + '</div><div class="sub">' + esc(t().wt[c.work_type] || c.work_type || '') + '</div></div>' +
       '<span class="pill" style="background:' + (COLORS[st] || '#64748b') + '">' + esc(t().st[st] || st) + '</span></div>';
     if (st !== 'cancelled') h += '<div class="bar"><i style="width:' + pct + '%"></i></div>';
     if (c.stage || c.in_trial) h += '<div class="stage">' + (c.in_trial ? '⏱ ' + esc(t().trial) : '▸ ' + esc(t().stage) + ': <b>' + esc(c.stage) + '</b>') + '</div>';
